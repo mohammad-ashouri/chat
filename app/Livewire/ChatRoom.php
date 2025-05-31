@@ -65,13 +65,12 @@ class ChatRoom extends Component
     {
         // Check if a direct chat already exists between these users
         $existingChat = Chat::whereHas('users', function ($query) use ($userId) {
-            $query->where('users.id', auth()->id())
-                ->orWhere('users.id', $userId);
+            $query->where('users.id', auth()->id());
+        })
+            ->whereHas('users', function ($query) use ($userId) {
+                $query->where('users.id', $userId);
         })
             ->where('is_group', false)
-            ->whereDoesntHave('users', function ($query) {
-                $query->where('users.id', '!=', auth()->id());
-            })
             ->first();
 
         if ($existingChat) {
