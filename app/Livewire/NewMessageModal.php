@@ -14,7 +14,9 @@ class NewMessageModal extends Component
 
     public function mount()
     {
-        $this->users = User::where('id', '!=', auth()->id())->get();
+        $this->users = User::where('id', '!=', auth()->id())
+            ->orderBy('name')
+            ->get();
     }
 
     public function updatedSearch()
@@ -35,4 +37,4 @@ class NewMessageModal extends Component
     {
         return view('livewire.new-message-modal');
     }
-} 
+}

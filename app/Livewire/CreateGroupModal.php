@@ -23,6 +23,7 @@ class CreateGroupModal extends Component
     {
         $this->users = User::where('id', '!=', auth()->id())
             ->where('name', 'like', '%' . $this->search . '%')
+            ->orderBy('name')
             ->get();
     }
 
@@ -66,4 +67,4 @@ class CreateGroupModal extends Component
     {
         return view('livewire.create-group-modal');
     }
-} 
+}
