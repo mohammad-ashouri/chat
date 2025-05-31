@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Chat;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -14,69 +15,73 @@ class ChatRoom extends Component
 {
     use WithFileUploads;
 
-    public $chats;
-    public $activeChat;
+    public $selectedChat = null;
     public $message = '';
+    public $messages = [];
+    public $chats = [];
+    public $users = [];
+    public $activeChat;
     public $attachment;
     public $search = '';
 
-    protected $listeners = ['messageReceived' => 'refreshMessages'];
+    protected $listeners = [
+        'chatSelected' => 'handleChatSelected',
+        'messageReceived' => 'refreshMessages'
+    ];
 
     public function mount()
     {
         $this->loadChats();
-        $this->activeChat = $this->chats->first();
+        $this->loadUsers();
     }
 
     public function loadChats()
     {
-        $this->chats = Auth::user()->chats()
-            ->with(['users', 'lastMessage'])
-            ->when($this->search, function ($query) {
-                $query->whereHas('users', function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->orderByDesc('updated_at')
+        $this->chats = Chat::whereHas('users', function ($query) {
+            $query->where('users.id', auth()->id());
+        })->with(['users', 'messages' => function ($query) {
+            $query->latest();
+        }])->get();
+    }
+
+    public function loadUsers()
+    {
+        // Get users that the current user has chatted with
+        $this->users = User::whereHas('chats', function ($query) {
+            $query->whereHas('users', function ($q) {
+                $q->where('users.id', auth()->id());
+            });
+        })
+            ->where('id', '!=', auth()->id())
             ->get();
     }
 
-    public function selectChat($chatId)
+    public function handleChatSelected($chatId)
     {
-        $this->activeChat = Chat::with(['messages.user', 'users'])->find($chatId);
+        $this->selectedChat = Chat::with(['users', 'messages.user'])->find($chatId);
+        $this->messages = $this->selectedChat->messages()->with('user')->orderBy('created_at', 'asc')->get();
     }
 
     public function sendMessage()
     {
-        $this->validate([
-            'message' => 'required_without:attachment',
-            'attachment' => 'nullable|file|max:10240',
-        ]);
-
-        $message = new Message();
-        $message->user_id = Auth::id();
-        $message->chat_id = $this->activeChat->id;
-        $message->content = $this->message;
-
-        if ($this->attachment) {
-            $path = $this->attachment->store('attachments', 'public');
-            $message->attachment = $path;
-            $message->attachment_type = $this->attachment->getMimeType();
+        if (empty($this->message)) {
+            return;
         }
 
-        $message->save();
+        Message::create([
+            'chat_id' => $this->selectedChat->id,
+            'user_id' => auth()->id(),
+            'content' => $this->message
+        ]);
 
-        $this->activeChat->touch();
-        $this->activeChat->refresh();
         $this->message = '';
-        $this->attachment = null;
-
-        $this->dispatch('messageSent');
+        $this->loadChats();
+        $this->handleChatSelected($this->selectedChat->id);
     }
 
     public function refreshMessages()
     {
-        $this->activeChat->refresh();
+        $this->selectedChat->refresh();
     }
 
     public function render()

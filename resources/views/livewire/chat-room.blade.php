@@ -1,162 +1,136 @@
 <div class="flex h-screen bg-gray-100">
-    <!-- سایدبار -->
-    <div class="w-1/4 bg-white border-r border-gray-200 flex flex-col">
-        <div class="p-4 border-b border-gray-200">
-            <h2 class="text-xl font-semibold">چت‌ها</h2>
-            <input
-                type="text"
-                wire:model.live="search"
-                placeholder="جستجو در چت‌ها..."
-                class="w-full mt-2 p-2 border rounded-lg"
-            >
+    <!-- Sidebar -->
+    <div class="w-64 bg-white shadow-lg">
+        <div class="p-4 space-y-2">
+            <div class="flex space-x-2 rtl:space-x-reverse">
+                <livewire:new-message-modal/>
+                <livewire:create-group-modal/>
+            </div>
         </div>
 
-        <div class="flex-1 overflow-y-auto">
-            @foreach($chats as $chat)
-                <div
-                    wire:click="selectChat({{ $chat->id }})"
-                    class="p-4 border-b border-gray-200 hover:bg-gray-50 cursor-pointer flex items-center {{ $activeChat && $activeChat->id == $chat->id ? 'bg-blue-50' : '' }}"
-                >
-                    <div class="flex-shrink-0">
-                        <img
-                            src="{{ $chat->isGroup() ? asset('images/group-icon.png') : $chat->otherUser()->avatar }}"
-                            alt="avatar"
-                            class="h-10 w-10 rounded-full"
-                        >
-                    </div>
-                    <div class="ml-3 flex-1">
-                        <div class="flex justify-between items-center">
-                            <h3 class="text-sm font-medium">
-                                {{ $chat->isGroup() ? $chat->name : $chat->otherUser()->name }}
-                            </h3>
-                            <span class="text-xs text-gray-500">
-                                {{ $chat->lastMessage ? $chat->lastMessage->created_at->shortRelativeDiffForHumans() : '' }}
-                            </span>
+        <div class="mt-4">
+            <h3 class="px-4 text-sm font-semibold text-gray-500 uppercase">کاربران</h3>
+            <div class="mt-2">
+                @foreach($users as $user)
+                    <div wire:click="handleChatSelected({{ $user->id }})"
+                         class="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center">
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold ml-3">
+                            {{ substr($user->name, 0, 1) }}
                         </div>
-                        <p class="text-sm text-gray-500 truncate">
-                            {{ $chat->lastMessage ? ($chat->lastMessage->user_id == auth()->id() ? 'شما: ' : '').$chat->lastMessage->content : 'هیچ پیامی وجود ندارد' }}
-                        </p>
+                        <div>
+                            <div class="font-medium text-gray-900">{{ $user->name }}</div>
+                            <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                        </div>
                     </div>
-                </div>
-            @endforeach
+                @endforeach
+            </div>
+        </div>
+
+        <div class="mt-4 border-t pt-4">
+            <h3 class="px-4 text-sm font-semibold text-gray-500 uppercase">چت‌های اخیر</h3>
+            <div class="mt-2">
+                @foreach($chats as $chat)
+                    <div wire:click="handleChatSelected({{ $chat->id }})"
+                         class="px-4 py-2 hover:bg-gray-100 cursor-pointer {{ $selectedChat && $selectedChat->id === $chat->id ? 'bg-gray-100' : '' }}">
+                        @if($chat->is_group)
+                            <div class="flex items-center">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold ml-3">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="font-medium">{{ $chat->name }}</div>
+                                    <div class="text-sm text-gray-500">{{ $chat->users->count() }} عضو</div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="flex items-center">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold ml-3">
+                                    {{ substr($chat->otherUser()->name, 0, 1) }}
+                                </div>
+                                <div>
+                                    <div class="font-medium">{{ $chat->otherUser()->name }}</div>
+                                    @if($chat->lastMessage)
+                                        <div class="text-sm text-gray-500 truncate">
+                                            {{ $chat->lastMessage->user_id === auth()->id() ? 'شما: ' : '' }}{{ $chat->lastMessage->content }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 
-    <!-- صفحه اصلی چت -->
+    <!-- Chat Area -->
     <div class="flex-1 flex flex-col">
-        @if($activeChat)
-            <!-- هدر چت -->
-            <div class="p-4 border-b border-gray-200 bg-white flex items-center">
-                <div class="flex-shrink-0">
-                    <img
-                        src="{{ $activeChat->isGroup() ? asset('images/group-icon.png') : $activeChat->otherUser()->avatar }}"
-                        alt="avatar"
-                        class="h-10 w-10 rounded-full"
-                    >
-                </div>
-                <div class="ml-3">
-                    <h3 class="text-lg font-medium">
-                        {{ $activeChat->isGroup() ? $activeChat->name : $activeChat->otherUser()->name }}
-                    </h3>
-                    <p class="text-sm text-gray-500">
-                        {{ $activeChat->isGroup() ? $activeChat->users->count().' عضو' : ($activeChat->otherUser()->isOnline() ? 'آنلاین' : 'آفلاین') }}
-                    </p>
-                </div>
+        @if($selectedChat)
+            <div class="p-4 border-b bg-white">
+                @if($selectedChat->is_group)
+                    <div class="flex items-center">
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold ml-3">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-medium">{{ $selectedChat->name }}</h2>
+                            <p class="text-sm text-gray-500">{{ $selectedChat->users->count() }} عضو</p>
+                        </div>
+                    </div>
+                @else
+                    <div class="flex items-center">
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold ml-3">
+                            {{ substr($selectedChat->otherUser()->name, 0, 1) }}
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-medium">{{ $selectedChat->otherUser()->name }}</h2>
+                            <p class="text-sm text-gray-500">
+                                {{ $selectedChat->otherUser()->isOnline() ? 'آنلاین' : 'آفلاین' }}
+                            </p>
+                        </div>
+                    </div>
+                @endif
             </div>
 
-            <!-- محتوای چت -->
-            <div
-                class="flex-1 overflow-y-auto p-4 bg-gray-50"
-                id="chat-messages"
-                wire:ignore
-            >
-                @foreach($activeChat->messages as $message)
-                    <div class="mb-4 flex {{ $message->user_id == auth()->id() ? 'justify-end' : 'justify-start' }}">
+            <div class="flex-1 p-4 overflow-y-auto" id="chat-messages">
+                @foreach($messages as $message)
+                    <div class="mb-4 {{ $message->user_id === auth()->id() ? 'text-right' : 'text-left' }}">
                         <div
-                            class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg {{ $message->user_id == auth()->id() ? 'bg-blue-500 text-white' : 'bg-white border border-gray-200' }}">
-                            <div
-                                class="text-xs text-{{ $message->user_id == auth()->id() ? 'blue-100' : 'gray-500' }} mb-1">
-                                {{ $message->user->name }} - {{ $message->created_at->format('H:i') }}
-                            </div>
-                            <p>{{ $message->content }}</p>
-                            @if($message->attachment)
-                                <div class="mt-2">
-                                    @if(str_starts_with($message->attachment_type, 'image/'))
-                                        <img src="{{ asset('storage/'.$message->attachment) }}" alt="attachment"
-                                             class="max-w-full h-auto rounded">
-                                    @else
-                                        <a href="{{ asset('storage/'.$message->attachment) }}" download
-                                           class="text-blue-500 hover:underline flex items-center">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor"
-                                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                                            </svg>
-                                            دانلود فایل
-                                        </a>
-                                    @endif
-                                </div>
-                            @endif
+                            class="inline-block p-3 rounded-lg {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200' }}">
+                            {{ $message->content }}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            {{ $message->user->name }} - {{ $message->created_at->format('H:i') }}
                         </div>
                     </div>
                 @endforeach
             </div>
 
-            <!-- فرم ارسال پیام -->
-            <div class="p-4 border-t border-gray-200 bg-white">
-                @if($attachment)
-                    <div class="mb-2 flex items-center justify-between p-2 bg-gray-100 rounded">
-                        <span class="text-sm">
-                            فایل انتخاب شده: {{ $attachment->getClientOriginalName() }}
-                        </span>
-                        <button wire:click="$set('attachment', null)" class="text-red-500 hover:text-red-700">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                 xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-                @endif
-
-                <div class="flex">
-                    <label for="attachment"
-                           class="flex items-center justify-center p-2 rounded-lg bg-gray-100 hover:bg-gray-200 cursor-pointer mr-2">
-                        <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                             xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
-                        </svg>
-                        <input type="file" id="attachment" wire:model="attachment" class="hidden">
-                    </label>
-
-                    <input
-                        type="text"
-                        wire:model="message"
-                        wire:keydown.enter="sendMessage"
-                        placeholder="پیام خود را بنویسید..."
-                        class="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-
-                    <button
-                        wire:click="sendMessage"
-                        class="ml-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
+            <div class="border-t p-4">
+                <form wire:submit="sendMessage" class="flex">
+                    <input type="text" wire:model="message"
+                           class="flex-1 border rounded-l-lg px-4 py-2 focus:outline-none focus:border-blue-500"
+                           placeholder="پیام خود را بنویسید...">
+                    <button type="submit"
+                            class="bg-blue-500 text-white px-6 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none">
                         ارسال
                     </button>
-                </div>
+                </form>
             </div>
         @else
-            <div class="flex-1 flex items-center justify-center bg-gray-50">
-                <div class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                         xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                    </svg>
-                    <h3 class="mt-2 text-lg font-medium text-gray-900">چتی انتخاب نشده است</h3>
-                    <p class="mt-1 text-gray-500">لطفاً یک چت را از لیست سمت راست انتخاب کنید.</p>
-                </div>
+            <div class="flex-1 flex items-center justify-center text-gray-500">
+                برای شروع چت، یک کاربر را انتخاب کنید یا یک گروه جدید ایجاد کنید
             </div>
         @endif
     </div>

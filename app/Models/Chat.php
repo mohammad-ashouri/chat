@@ -2,13 +2,23 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Chat extends Model
 {
-    protected $fillable = ['name', 'is_group'];
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'is_group'
+    ];
+
+    protected $casts = [
+        'is_group' => 'boolean'
+    ];
 
     public function users(): BelongsToMany
     {
@@ -17,12 +27,12 @@ class Chat extends Model
 
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class)->latest();
+        return $this->hasMany(Message::class);
     }
 
     public function lastMessage()
     {
-        return $this->hasOne(Message::class)->latestOfMany();
+        return $this->messages()->latest()->first();
     }
 
     public function isGroup(): bool
@@ -32,6 +42,9 @@ class Chat extends Model
 
     public function otherUser()
     {
-        return $this->users()->where('users.id', '!=', auth()->id())->first();
+        if (!$this->is_group) {
+            return $this->users()->where('users.id', '!=', auth()->id())->first();
+        }
+        return null;
     }
 }
