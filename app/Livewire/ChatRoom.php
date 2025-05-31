@@ -26,7 +26,8 @@ class ChatRoom extends Component
 
     protected $listeners = [
         'chatSelected' => 'handleChatSelected',
-        'messageReceived' => 'refreshMessages'
+        'messageReceived' => 'refreshMessages',
+        'userSelected' => 'handleUserSelected'
     ];
 
     public function mount()
@@ -37,11 +38,12 @@ class ChatRoom extends Component
 
     public function loadChats()
     {
-        $this->chats = Chat::whereHas('users', function ($query) {
-            $query->where('users.id', auth()->id());
-        })->with(['users', 'messages' => function ($query) {
-            $query->latest();
-        }])->get();
+        $this->chats = auth()->user()->chats()
+            ->with(['users', 'lastMessage.user'])
+            ->get()
+            ->sortByDesc(function ($chat) {
+                return $chat->lastMessage?->created_at ?? $chat->created_at;
+            });
     }
 
     public function loadUsers()
@@ -54,6 +56,35 @@ class ChatRoom extends Component
         })
             ->where('id', '!=', auth()->id())
             ->get();
+    }
+
+    public function handleUserSelected($userId)
+    {
+        // Check if a direct chat already exists between these users
+        $existingChat = Chat::whereHas('users', function ($query) use ($userId) {
+            $query->where('users.id', auth()->id())
+                ->orWhere('users.id', $userId);
+        })
+            ->where('is_group', false)
+            ->whereDoesntHave('users', function ($query) {
+                $query->where('users.id', '!=', auth()->id());
+            })
+            ->first();
+
+        if ($existingChat) {
+            $this->handleChatSelected($existingChat->id);
+        } else {
+            // Create a new chat
+            $chat = Chat::create([
+                'is_group' => false
+            ]);
+
+            // Attach both users to the chat
+            $chat->users()->attach([auth()->id(), $userId]);
+
+            $this->loadChats();
+            $this->handleChatSelected($chat->id);
+        }
     }
 
     public function handleChatSelected($chatId)
