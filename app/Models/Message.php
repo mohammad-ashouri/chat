@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Message extends Model
 {
@@ -15,12 +16,7 @@ class Message extends Model
         'user_id',
         'content',
         'attachment',
-        'attachment_type',
-        'read_at'
-    ];
-
-    protected $casts = [
-        'read_at' => 'datetime'
+        'attachment_type'
     ];
 
     public function chat()
@@ -33,15 +29,22 @@ class Message extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function readBy()
+    {
+        return $this->belongsToMany(User::class)
+            ->withPivot('read_at')
+            ->withTimestamps();
+    }
+
     public function markAsRead()
     {
-        if (!$this->read_at) {
-            $this->update(['read_at' => now()]);
+        if (!$this->isRead()) {
+            $this->readBy()->attach(auth()->id(), ['read_at' => now()]);
         }
     }
 
     public function isRead(): bool
     {
-        return !is_null($this->read_at);
+        return $this->readBy()->where('user_id', auth()->id())->exists();
     }
 }

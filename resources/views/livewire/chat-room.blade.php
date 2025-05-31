@@ -47,6 +47,14 @@
                                                 @endif
                                             </p>
                                         </div>
+                                        @if($chat->unreadMessagesCount() > 0)
+                                            <div class="flex-shrink-0">
+                                                <span
+                                                    class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-500 text-xs font-medium text-white">
+                                                    {{ $chat->unreadMessagesCount() }}
+                                                </span>
+                                            </div>
+                                        @endif
                                     @else
                                         @php
                                             $otherUser = $chat->users->where('id', '!=', auth()->id())->first();
@@ -81,6 +89,14 @@
                                                 @endif
                                             </p>
                                         </div>
+                                        @if($chat->unreadMessagesCount() > 0)
+                                            <div class="flex-shrink-0">
+                                                <span
+                                                    class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-blue-500 text-xs font-medium text-white">
+                                                    {{ $chat->unreadMessagesCount() }}
+                                                </span>
+                                            </div>
+                                        @endif
                                     @endif
                                 </div>
                             </div>

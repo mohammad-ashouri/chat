@@ -48,4 +48,14 @@ class Chat extends Model
         }
         return null;
     }
+
+    public function unreadMessagesCount()
+    {
+        return $this->messages()
+            ->where('user_id', '!=', auth()->id())
+            ->whereDoesntHave('readBy', function ($query) {
+                $query->where('user_id', auth()->id());
+            })
+            ->count();
+    }
 }

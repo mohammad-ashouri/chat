@@ -94,15 +94,16 @@ class ChatRoom extends Component
         $this->selectedChat = Chat::with(['users', 'messages.user'])->find($chatId);
         $this->messages = $this->selectedChat->messages()->with('user')->orderBy('created_at', 'asc')->get();
 
-        // Mark unread messages as read
-        if (!$this->selectedChat->isGroup()) {
-            $this->selectedChat->messages()
-                ->where('user_id', '!=', auth()->id())
-                ->whereNull('read_at')
-                ->get()
-                ->each
-                ->markAsRead();
-        }
+        // Mark unread messages as read for both direct and group chats
+        $this->selectedChat->messages()
+            ->where('user_id', '!=', auth()->id())
+            ->whereNull('read_at')
+            ->get()
+            ->each
+            ->markAsRead();
+
+        // Refresh the chat list to update unread counts
+        $this->loadChats();
     }
 
     public function sendMessage()
