@@ -19,6 +19,15 @@ class NewMessageModal extends Component
             ->get();
     }
 
+    public function updatedShowModal($value)
+    {
+        if ($value) {
+            $this->dispatch('newMessageModalOpened');
+        } else {
+            $this->dispatch('newMessageModalClosed');
+        }
+    }
+
     public function updatedSearch()
     {
         $this->users = User::where('id', '!=', auth()->id())

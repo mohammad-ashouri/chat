@@ -22,8 +22,25 @@
     </button>
 
     @if($showModal)
-        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="modal">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+             x-data="{ show: true }"
+             x-show="show"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click.self="$wire.set('showModal', false)"
+             style="display: none;"
+             id="modal">
+            <div class="relative top-20 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white z-50"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 transform scale-100"
+                 x-transition:leave-end="opacity-0 transform scale-95">
                 <div class="mt-3">
                     <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">انتخاب کاربر</h3>
 
@@ -31,7 +48,7 @@
                         <input type="text" wire:model.live="search" placeholder="جستجوی کاربر..."
                                class="w-full px-3 py-2 border rounded-md">
 
-                        <div class="mt-4 max-h-60 overflow-y-auto">
+                        <div class="mt-4 max-h-[400px] overflow-y-auto">
                             @foreach($users as $user)
                                 <div wire:click="selectUser({{ $user->id }})"
                                      class="p-2 hover:bg-gray-100 cursor-pointer rounded-md">

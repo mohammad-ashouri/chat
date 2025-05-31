@@ -11,18 +11,25 @@
     </button>
 
     @if($showModal)
-        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" 
              x-data="{ show: true }"
              x-show="show"
-             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter="ease-out duration-300"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
-             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave="ease-in duration-200"
              x-transition:leave-start="opacity-100"
              x-transition:leave-end="opacity-0"
-             wire:click="$set('showModal', false)">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white"
-                 wire:click.stop>
+             @click.self="$wire.set('showModal', false)"
+             style="display: none;"
+             id="modal">
+            <div class="relative top-20 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white z-50"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 transform scale-100"
+                 x-transition:leave-end="opacity-0 transform scale-95">
                 <div class="mt-3">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg leading-6 font-medium text-gray-900">ایجاد گروه جدید</h3>
@@ -63,7 +70,7 @@
                                 </div>
                             </div>
 
-                            <div class="mt-4 max-h-60 overflow-y-auto space-y-2">
+                            <div class="mt-4 max-h-[400px] overflow-y-auto space-y-2">
                                 @foreach($users as $user)
                                     <div wire:click="toggleUser({{ $user->id }})"
                                          class="p-3 hover:bg-green-50 cursor-pointer rounded-lg transition duration-200 flex items-center">

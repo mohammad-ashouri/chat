@@ -23,11 +23,14 @@ class ChatRoom extends Component
     public $activeChat;
     public $attachment;
     public $search = '';
+    public $isNewMessageModalOpen = false;
 
     protected $listeners = [
         'chatSelected' => 'handleChatSelected',
         'messageReceived' => 'refreshMessages',
-        'userSelected' => 'handleUserSelected'
+        'userSelected' => 'handleUserSelected',
+        'newMessageModalOpened' => 'handleNewMessageModalOpened',
+        'newMessageModalClosed' => 'handleNewMessageModalClosed'
     ];
 
     public function mount()
@@ -123,6 +126,16 @@ class ChatRoom extends Component
     public function refreshMessages()
     {
         $this->selectedChat->refresh();
+    }
+
+    public function handleNewMessageModalOpened()
+    {
+        $this->isNewMessageModalOpen = true;
+    }
+
+    public function handleNewMessageModalClosed()
+    {
+        $this->isNewMessageModalOpen = false;
     }
 
     public function render()
