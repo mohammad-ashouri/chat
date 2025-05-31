@@ -1,0 +1,28 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class SiteSetting extends Model
+{
+    protected $table = "site_settings";
+    protected $fillable = [
+        'id',
+        'title',
+        'value',
+        'editor',
+    ];
+
+    protected $hidden = [
+        'editor',
+        'created_at',
+        'updated_at',
+    ];
+
+    public function editorInfo(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id', 'editor');
+    }
+}

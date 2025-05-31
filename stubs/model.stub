@@ -1,0 +1,37 @@
+<?php
+
+namespace {{ namespace }};
+
+{{ factoryImport }}
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class {{ class }} extends Model
+{
+    use SoftDeletes;
+    protected $table = "";
+    protected $fillable = [
+        'id',
+        'adder',
+        'editor',
+    ];
+
+    protected $hidden = [
+        'adder',
+        'editor',
+        'created_at',
+        'updated_at',
+        'deleted_at'
+    ];
+
+    public function adderInfo(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id', 'adder');
+    }
+
+    public function editorInfo(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'id', 'editor');
+    }
+    {{ factory }}
+}
