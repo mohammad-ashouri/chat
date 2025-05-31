@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->text('content')->nullable();
             $table->string('attachment')->nullable();
             $table->string('attachment_type')->nullable();
+            $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
     }

@@ -15,7 +15,12 @@ class Message extends Model
         'user_id',
         'content',
         'attachment',
-        'attachment_type'
+        'attachment_type',
+        'read_at'
+    ];
+
+    protected $casts = [
+        'read_at' => 'datetime'
     ];
 
     public function chat()
@@ -26,5 +31,17 @@ class Message extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function markAsRead()
+    {
+        if (!$this->read_at) {
+            $this->update(['read_at' => now()]);
+        }
+    }
+
+    public function isRead(): bool
+    {
+        return !is_null($this->read_at);
     }
 }
