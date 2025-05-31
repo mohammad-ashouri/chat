@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Models\User;
+use App\Models\Draft;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -91,8 +92,20 @@ class ChatRoom extends Component
 
     public function handleChatSelected($chatId)
     {
+        // Save current draft if exists
+        if ($this->selectedChat && !empty($this->message)) {
+            $this->saveDraft();
+        }
+
         $this->selectedChat = Chat::with(['users', 'messages.user'])->find($chatId);
         $this->messages = $this->selectedChat->messages()->with('user')->orderBy('created_at', 'asc')->get();
+
+        // Load draft if exists
+        $draft = Draft::where('user_id', auth()->id())
+            ->where('chat_id', $chatId)
+            ->first();
+
+        $this->message = $draft ? $draft->content : '';
 
         // Mark unread messages as read for both direct and group chats
         $this->selectedChat->messages()
@@ -106,6 +119,28 @@ class ChatRoom extends Component
         $this->loadChats();
     }
 
+    public function updatedMessage()
+    {
+        if ($this->selectedChat) {
+            $this->dispatch('saveDraft')->self();
+        }
+    }
+
+    public function saveDraft()
+    {
+        if ($this->selectedChat && !empty($this->message)) {
+            Draft::updateOrCreate(
+                [
+                    'user_id' => auth()->id(),
+                    'chat_id' => $this->selectedChat->id
+                ],
+                [
+                    'content' => $this->message
+                ]
+            );
+        }
+    }
+
     public function sendMessage()
     {
         if (empty($this->message)) {
@@ -117,6 +152,11 @@ class ChatRoom extends Component
             'user_id' => auth()->id(),
             'content' => $this->message
         ]);
+
+        // Delete draft after sending message
+        Draft::where('user_id', auth()->id())
+            ->where('chat_id', $this->selectedChat->id)
+            ->delete();
 
         $this->message = '';
         $this->loadChats();

@@ -141,40 +141,30 @@
                 </div>
 
                 <div class="flex-1 p-4 overflow-y-auto" id="chat-messages">
-                    @foreach($messages as $message)
-                        <div class="mb-4 {{ $message->user_id === auth()->id() ? 'text-right' : 'text-left' }}">
+                    <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                        @foreach($messages as $message)
                             <div
-                                class="inline-block p-3 rounded-lg {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200' }}">
-                                {{ $message->content }}
+                                class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
+                                <div
+                                    class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800' }} rounded-lg px-4 py-2">
+                                    <div class="text-sm">{{ $message->content }}</div>
+                                    <div
+                                        class="text-xs mt-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500' }}">
+                                        {{ $message->user->name }} - {{ $message->created_at->format('H:i') }}
+                                    </div>
+                                </div>
                             </div>
-                            <div
-                                class="text-xs text-gray-500 mt-1 flex items-center gap-1 {{ $message->user_id === auth()->id() ? 'justify-start' : 'justify-end' }}">
-                                {{ $message->user->name }} - {{ $message->created_at->format('H:i') }}
-                                @if($message->user_id === auth()->id())
-                                    @if($message->isRead())
-                                        <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"/>
-                                        </svg>
-                                    @else
-                                        <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"/>
-                                        </svg>
-                                    @endif
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
                 </div>
 
                 <div class="border-t p-4">
-                    <form wire:submit="sendMessage" class="flex">
-                        <input type="text" wire:model="message"
-                               class="flex-1 border rounded-l-lg px-4 py-2 focus:outline-none focus:border-blue-500"
-                               placeholder="پیام خود را بنویسید...">
-                        <button type="submit"
-                                class="bg-blue-500 text-white px-6 py-2 rounded-r-lg hover:bg-blue-600 focus:outline-none">
+                    <form wire:submit="sendMessage" class="flex space-x-2 rtl:space-x-reverse">
+                        <input type="text"
+                               wire:model.live.debounce.1000ms="message"
+                               placeholder="پیام خود را بنویسید..."
+                               class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500">
+                        <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
                             ارسال
                         </button>
                     </form>
