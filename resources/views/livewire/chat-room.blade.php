@@ -123,6 +123,11 @@
                                 <h2 class="text-lg font-medium">{{ $selectedChat->name }}</h2>
                                 <p class="text-sm text-gray-500">{{ $selectedChat->users->count() }} عضو</p>
                             </div>
+                            @if($selectedChat->is_group)
+                                <div class="mr-auto">
+                                    <livewire:group-management :group="$selectedChat"/>
+                                </div>
+                            @endif
                         </div>
                     @else
                         <div class="flex items-center">
@@ -178,19 +183,21 @@
     </div>
 </div>
 
-@script
 <script>
     // اسکرول به پایین هنگام بارگذاری چت یا ارسال پیام جدید
-    function scrollToBottom() {
+    window.scrollToBottom = function () {
         const chatMessages = document.getElementById('chat-messages');
         if (chatMessages) {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     }
+</script>
 
+@script
+<script>
     // اسکرول هنگام بارگذاری اولیه
     document.addEventListener('livewire:initialized', () => {
-        scrollToBottom();
+        window.scrollToBottom();
 
         // Load selected chat from localStorage
         const selectedChatId = localStorage.getItem('selectedChatId');
@@ -201,7 +208,7 @@
 
     // اسکرول هنگام ارسال پیام یا تغییر چت
     document.addEventListener('livewire:updated', () => {
-        scrollToBottom();
+        window.scrollToBottom();
     });
 
     // Save selected chat to localStorage
@@ -216,6 +223,13 @@
     document.addEventListener('livewire:initialized', () => {
         Livewire.on('saveSelectedChat', (event) => {
             localStorage.setItem('selectedChatId', event.chatId);
+        });
+    });
+
+    // Listen for message sent event
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('message-sent', () => {
+            window.scrollToBottom();
         });
     });
 </script>

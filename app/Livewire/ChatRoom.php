@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use App\Livewire\CreateGroupModal;
+use App\Livewire\NewMessageModal;
+use App\Livewire\GroupManagement;
 
 #[Title('پیام ها')]
 class ChatRoom extends Component
@@ -31,7 +34,11 @@ class ChatRoom extends Component
         'messageReceived' => 'refreshMessages',
         'userSelected' => 'handleUserSelected',
         'newMessageModalOpened' => 'handleNewMessageModalOpened',
-        'newMessageModalClosed' => 'handleNewMessageModalClosed'
+        'newMessageModalClosed' => 'handleNewMessageModalClosed',
+        'group-updated' => 'refreshChats',
+        'refresh-sidebar' => 'refreshChats',
+        'refresh-chat' => 'refreshMessages',
+        'group-deleted' => 'handleGroupDeleted'
     ];
 
     public function mount()
@@ -90,6 +97,22 @@ class ChatRoom extends Component
         }
     }
 
+    public function handleGroupDeleted($groupId)
+    {
+        // If the deleted group was selected, clear the selection
+        if ($this->selectedChat && $this->selectedChat->id === $groupId) {
+            $this->selectedChat = null;
+            $this->messages = [];
+            $this->message = '';
+        }
+
+        // Refresh the chat list
+        $this->loadChats();
+
+        // Clear selected chat from localStorage
+        $this->dispatch('saveSelectedChat', chatId: null);
+    }
+
     public function handleChatSelected($chatId)
     {
         // Save current draft if exists
@@ -97,7 +120,17 @@ class ChatRoom extends Component
             $this->saveDraft();
         }
 
-        $this->selectedChat = Chat::with(['users', 'messages.user'])->find($chatId);
+        $chat = Chat::with(['users', 'messages.user'])->find($chatId);
+
+        if (!$chat) {
+            $this->selectedChat = null;
+            $this->messages = [];
+            $this->message = '';
+            $this->loadChats();
+            return;
+        }
+
+        $this->selectedChat = $chat;
         $this->messages = $this->selectedChat->messages()->with('user')->orderBy('created_at', 'asc')->get();
 
         // Load draft if exists
@@ -125,7 +158,14 @@ class ChatRoom extends Component
     public function updatedMessage()
     {
         if ($this->selectedChat) {
-            $this->dispatch('saveDraft')->self();
+            if (empty($this->message)) {
+                // Delete draft when message is empty
+                Draft::where('user_id', auth()->id())
+                    ->where('chat_id', $this->selectedChat->id)
+                    ->delete();
+            } else {
+                $this->dispatch('saveDraft')->self();
+            }
         }
     }
 
@@ -164,6 +204,8 @@ class ChatRoom extends Component
         $this->message = '';
         $this->loadChats();
         $this->handleChatSelected($this->selectedChat->id);
+
+        $this->dispatch('message-sent');
     }
 
     public function refreshMessages()
