@@ -117,6 +117,9 @@ class ChatRoom extends Component
 
         // Refresh the chat list to update unread counts
         $this->loadChats();
+
+        // Save selected chat ID to localStorage
+        $this->dispatch('saveSelectedChat', chatId: $chatId);
     }
 
     public function updatedMessage()

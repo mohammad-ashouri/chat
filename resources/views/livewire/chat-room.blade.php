@@ -191,11 +191,32 @@
     // اسکرول هنگام بارگذاری اولیه
     document.addEventListener('livewire:initialized', () => {
         scrollToBottom();
+
+        // Load selected chat from localStorage
+        const selectedChatId = localStorage.getItem('selectedChatId');
+        if (selectedChatId) {
+            $wire.handleChatSelected(selectedChatId);
+        }
     });
 
     // اسکرول هنگام ارسال پیام یا تغییر چت
     document.addEventListener('livewire:updated', () => {
         scrollToBottom();
+    });
+
+    // Save selected chat to localStorage
+    document.addEventListener('livewire:navigated', () => {
+        const selectedChatId = localStorage.getItem('selectedChatId');
+        if (selectedChatId) {
+            $wire.handleChatSelected(selectedChatId);
+        }
+    });
+
+    // Listen for saveSelectedChat event
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('saveSelectedChat', (event) => {
+            localStorage.setItem('selectedChatId', event.chatId);
+        });
     });
 </script>
 @endscript
