@@ -11,7 +11,8 @@
     </button>
 
     @if($showModal)
-        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" 
+        <div
+            class="fixed inset-0 bg-gray-600 bg-opacity-50 dark:bg-gray-900 dark:bg-opacity-50 overflow-y-auto h-full w-full z-50"
              x-data="{ show: true }"
              x-show="show"
              x-transition:enter="ease-out duration-300"
@@ -23,7 +24,8 @@
              @click.self="$wire.set('showModal', false)"
              style="display: none;"
              id="modal">
-            <div class="relative top-20 mx-auto p-5 border w-[500px] shadow-lg rounded-md bg-white z-50"
+            <div
+                class="relative top-20 mx-auto p-5 border dark:border-gray-700 w-[500px] shadow-lg rounded-md bg-white dark:bg-gray-800 z-50"
                  x-transition:enter="ease-out duration-300"
                  x-transition:enter-start="opacity-0 transform scale-95"
                  x-transition:enter-end="opacity-100 transform scale-100"
@@ -32,8 +34,9 @@
                  x-transition:leave-end="opacity-0 transform scale-95">
                 <div class="mt-3">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900">ایجاد گروه جدید</h3>
-                        <button wire:click="$set('showModal', false)" class="text-gray-400 hover:text-gray-500">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100">ایجاد گروه جدید</h3>
+                        <button wire:click="$set('showModal', false)"
+                                class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                       d="M6 18L18 6M6 6l12 12"></path>
@@ -43,11 +46,12 @@
 
                     <div class="mt-2 px-7 py-3">
                         <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="groupName">
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2"
+                                   for="groupName">
                                 نام گروه
                             </label>
                             <input type="text" wire:model="groupName" id="groupName"
-                                   class="shadow appearance-none border rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200"
+                                   class="shadow appearance-none border dark:border-gray-600 rounded-lg w-full py-2 px-3 text-gray-700 dark:text-gray-100 dark:bg-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200"
                                    placeholder="نام گروه را وارد کنید">
                             @error('groupName')
                             <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
@@ -55,14 +59,15 @@
                         </div>
 
                         <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-bold mb-2">
+                            <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">
                                 انتخاب اعضا
                             </label>
                             <div class="relative">
                                 <input type="text" wire:model="search" placeholder="جستجوی کاربر..."
-                                       class="shadow appearance-none border rounded-lg w-full py-2 px-3 pr-10 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200">
+                                       class="shadow appearance-none border dark:border-gray-600 rounded-lg w-full py-2 px-3 pr-10 text-gray-700 dark:text-gray-100 dark:bg-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-200">
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
+                                    <svg class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none"
+                                         stroke="currentColor"
                                          viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -73,19 +78,21 @@
                             <div class="mt-4 max-h-[400px] overflow-y-auto space-y-2">
                                 @foreach($users as $user)
                                     <div wire:click="toggleUser({{ $user->id }})"
-                                         class="p-3 hover:bg-green-50 cursor-pointer rounded-lg transition duration-200 flex items-center">
+                                         class="p-3 hover:bg-green-50 dark:hover:bg-green-900/50 cursor-pointer rounded-lg transition duration-200 flex items-center">
                                         <div class="flex items-center h-5 ml-3">
                                             <input type="checkbox"
-                                                   class="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                                                   class="w-4 h-4 text-green-600 border-gray-300 dark:border-gray-600 rounded focus:ring-green-500 dark:bg-gray-700"
                                                 @checked(in_array($user->id, $selectedUsers))>
                                         </div>
                                         <div
-                                            class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold ml-3">
+                                            class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-300 font-semibold ml-3">
                                             {{ substr($user->name, 0, 1) }}
                                         </div>
                                         <div>
-                                            <div class="font-medium text-gray-900">{{ $user->name }}</div>
-                                            <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                                            <div
+                                                class="font-medium text-gray-900 dark:text-gray-100">{{ $user->name }}</div>
+                                            <div
+                                                class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</div>
                                         </div>
                                     </div>
                                 @endforeach

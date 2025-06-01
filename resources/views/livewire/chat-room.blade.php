@@ -1,7 +1,7 @@
-<div class="h-[calc(100vh-65px)] bg-gray-100">
+<div class="h-[calc(100vh-65px)] bg-gray-100 dark:bg-gray-900">
     <div class="flex h-full">
         <!-- Sidebar -->
-        <div class="w-80 bg-white shadow-lg overflow-y-auto">
+        <div class="w-80 bg-white dark:bg-gray-800 shadow-lg overflow-y-auto">
             <div class="p-4 space-y-2">
                 <div class="flex space-x-2 rtl:space-x-reverse">
                     <livewire:new-message-modal/>
@@ -10,13 +10,13 @@
             </div>
 
             <div class="mt-4">
-                <h3 class="px-4 text-sm font-semibold text-gray-500 uppercase">چت‌های اخیر</h3>
+                <h3 class="px-4 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase">چت‌های اخیر</h3>
                 <div class="mt-2">
                     <!-- Chat List -->
                     <div class="flex-1 overflow-y-auto">
                         @foreach($chats as $chat)
                             <div wire:click="handleChatSelected({{ $chat->id }})"
-                                 class="p-3 hover:bg-gray-100 cursor-pointer {{ $selectedChat && $selectedChat->id === $chat->id ? 'bg-gray-100' : '' }}">
+                                 class="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer {{ $selectedChat && $selectedChat->id === $chat->id ? 'bg-gray-100 dark:bg-gray-700' : '' }}">
                                 <div class="flex items-center space-x-3">
                                     @if($chat->is_group)
                                         <div class="flex-shrink-0">
@@ -27,14 +27,14 @@
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center justify-between">
-                                                <p class="text-sm font-medium text-gray-900 truncate">{{ $chat->name }}</p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ $chat->name }}</p>
                                                 @if($chat->lastMessage)
-                                                    <span class="text-xs text-gray-500">
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
                                                         {{ $chat->lastMessage->created_at->format('H:i') }}
                                                     </span>
                                                 @endif
                                             </div>
-                                            <p class="text-sm text-gray-500 truncate">
+                                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
                                                 @if($chat->lastMessage)
                                                     @if($chat->lastMessage->user_id === auth()->id())
                                                         شما:
@@ -61,24 +61,25 @@
                                         @endphp
                                         <div class="flex-shrink-0 relative">
                                             <div
-                                                class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                                <span class="text-gray-600">{{ substr($otherUser->name, 0, 1) }}</span>
+                                                class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                                <span
+                                                    class="text-gray-600 dark:text-gray-300">{{ substr($otherUser->name, 0, 1) }}</span>
                                             </div>
                                             @if($otherUser->isOnline())
                                                 <div
-                                                    class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                                                    class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                                             @endif
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <div class="flex items-center justify-between">
-                                                <p class="text-sm font-medium text-gray-900 truncate">{{ $otherUser->name }}</p>
+                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ $otherUser->name }}</p>
                                                 @if($chat->lastMessage)
-                                                    <span class="text-xs text-gray-500">
+                                                    <span class="text-xs text-gray-500 dark:text-gray-400">
                                                         {{ $chat->lastMessage->created_at->format('H:i') }}
                                                     </span>
                                                 @endif
                                             </div>
-                                            <p class="text-sm text-gray-500 truncate">
+                                            <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
                                                 @if($chat->lastMessage)
                                                     @if($chat->lastMessage->user_id === auth()->id())
                                                         شما:
@@ -109,19 +110,20 @@
         <!-- Chat Area -->
         <div class="flex-1 flex flex-col">
             @if($selectedChat)
-                <div class="p-4 border-b bg-white">
+                <div class="p-4 border-b bg-white dark:bg-gray-800 dark:border-gray-700">
                     @if($selectedChat->is_group)
                         <div class="flex items-center">
                             <div
-                                class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-semibold ml-3">
+                                class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-300 font-semibold ml-3">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                 </svg>
                             </div>
                             <div>
-                                <h2 class="text-lg font-medium">{{ $selectedChat->name }}</h2>
-                                <p class="text-sm text-gray-500">{{ $selectedChat->users->count() }} عضو</p>
+                                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $selectedChat->name }}</h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $selectedChat->users->count() }}
+                                    عضو</p>
                             </div>
                             @if($selectedChat->is_group)
                                 <div class="mr-auto">
@@ -132,12 +134,12 @@
                     @else
                         <div class="flex items-center">
                             <div
-                                class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold ml-3">
+                                class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold ml-3">
                                 {{ substr($selectedChat->otherUser()->name, 0, 1) }}
                             </div>
                             <div>
-                                <h2 class="text-lg font-medium">{{ $selectedChat->otherUser()->name }}</h2>
-                                <p class="text-sm text-gray-500">
+                                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $selectedChat->otherUser()->name }}</h2>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
                                     {{ $selectedChat->otherUser()->isOnline() ? 'آنلاین' : 'آفلاین' }}
                                 </p>
                             </div>
@@ -145,16 +147,16 @@
                     @endif
                 </div>
 
-                <div class="flex-1 p-4 overflow-y-auto" id="chat-messages">
+                <div class="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900" id="chat-messages">
                     <div class="flex-1 overflow-y-auto p-4 space-y-4">
                         @foreach($messages as $message)
                             <div
                                 class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
                                 <div
-                                    class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800' }} rounded-lg px-4 py-2">
+                                    class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200' }} rounded-lg px-4 py-2">
                                     <div class="text-sm">{{ $message->content }}</div>
                                     <div
-                                        class="text-xs mt-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500' }}">
+                                        class="text-xs mt-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
                                         {{ $message->user->name }} - {{ $message->created_at->format('H:i') }}
                                     </div>
                                 </div>
@@ -163,19 +165,20 @@
                     </div>
                 </div>
 
-                <div class="border-t p-4">
+                <div class="border-t dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
                     <form wire:submit="sendMessage" class="flex space-x-2 rtl:space-x-reverse">
                         <input type="text"
                                wire:model.live.debounce.1000ms="message"
                                placeholder="پیام خود را بنویسید..."
-                               class="flex-1 border rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500">
-                        <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600">
+                               class="flex-1 border dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+                        <button type="submit"
+                                class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-400">
                             ارسال
                         </button>
                     </form>
                 </div>
             @else
-                <div class="flex-1 flex items-center justify-center text-gray-500">
+                <div class="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
                     برای شروع چت، یک کاربر را انتخاب کنید یا یک گروه جدید ایجاد کنید
                 </div>
             @endif

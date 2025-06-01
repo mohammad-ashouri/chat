@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html dir="rtl" lang="{{ str_replace('_', '-', app()->getLocale()) }}"
+      x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }"
+      x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,6 +21,13 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+
+    <script>
+        // Check for saved dark mode preference
+        if (localStorage.getItem('darkMode') === null) {
+            localStorage.setItem('darkMode', 'true');
+        }
+    </script>
 </head>
 <body class="font-sans antialiased">
 <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -46,5 +55,17 @@
 </div>
 @livewireScripts
 @filepondScripts
+
+<script>
+    document.addEventListener('dark-mode-enabled', () => {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('darkMode', 'true');
+    });
+
+    document.addEventListener('dark-mode-disabled', () => {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('darkMode', 'false');
+    });
+</script>
 </body>
 </html>

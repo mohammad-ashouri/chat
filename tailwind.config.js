@@ -10,6 +10,8 @@ export default {
         './resources/views/livewire/*.blade.php',
     ],
 
+    darkMode: 'class',
+
     theme: {
         extend: {
             fontFamily: {
