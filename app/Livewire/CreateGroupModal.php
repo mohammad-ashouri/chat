@@ -45,7 +45,8 @@ class CreateGroupModal extends Component
 
         $chat = Chat::create([
             'name' => $this->groupName,
-            'is_group' => true
+            'is_group' => true,
+            'user_id' => auth()->id()
         ]);
 
         $chat->users()->attach(array_merge($this->selectedUsers, [auth()->id()]));

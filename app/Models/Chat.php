@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Chat extends Model
 {
@@ -14,12 +15,18 @@ class Chat extends Model
 
     protected $fillable = [
         'name',
-        'is_group'
+        'is_group',
+        'user_id'
     ];
 
     protected $casts = [
         'is_group' => 'boolean'
     ];
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     public function users(): BelongsToMany
     {

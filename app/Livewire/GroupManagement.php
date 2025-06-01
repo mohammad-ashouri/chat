@@ -7,6 +7,7 @@ use App\Models\Chat;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Log;
 
 class GroupManagement extends Component
 {
@@ -31,12 +32,27 @@ class GroupManagement extends Component
     {
         $this->group = $group;
         $this->groupName = $group->name;
-        $this->isAdmin = $group->users->contains(auth()->id());
+
+        // Debug information
+        Log::info('Group Management Debug', [
+            'group_id' => $group->id,
+            'group_user_id' => $group->user_id,
+            'auth_user_id' => auth()->id(),
+            'is_admin' => $group->user_id === auth()->id()
+        ]);
+
+        // Check if user is the creator of the group
+        $this->isAdmin = $group->user_id === auth()->id();
+
         $this->loadAvailableUsers();
     }
 
     public function loadAvailableUsers()
     {
+        if (!$this->isAdmin) {
+            return;
+        }
+
         $this->availableUsers = User::where('id', '!=', auth()->id())
             ->whereNotIn('id', $this->group->users->pluck('id'))
             ->when($this->search, function ($query) {
@@ -50,6 +66,10 @@ class GroupManagement extends Component
 
     public function openModal()
     {
+        if (!$this->isAdmin) {
+            return;
+        }
+
         $this->showModal = true;
         $this->dispatch('open-modal', 'group-management');
     }
@@ -62,11 +82,19 @@ class GroupManagement extends Component
 
     public function updatedSearch()
     {
+        if (!$this->isAdmin) {
+            return;
+        }
+
         $this->loadAvailableUsers();
     }
 
     public function toggleUser($userId)
     {
+        if (!$this->isAdmin) {
+            return;
+        }
+
         if (in_array($userId, $this->selectedUsers)) {
             $this->selectedUsers = array_diff($this->selectedUsers, [$userId]);
         } else {
@@ -76,26 +104,34 @@ class GroupManagement extends Component
 
     public function addSelectedMembers()
     {
-        if (!empty($this->selectedUsers)) {
-            $this->group->users()->attach($this->selectedUsers);
-            $this->selectedUsers = [];
-            $this->search = '';
-            $this->loadAvailableUsers();
-            $this->dispatch('member-added');
+        if (!$this->isAdmin || empty($this->selectedUsers)) {
+            return;
         }
+
+        $this->group->users()->attach($this->selectedUsers);
+        $this->selectedUsers = [];
+        $this->search = '';
+        $this->loadAvailableUsers();
+        $this->dispatch('member-added');
     }
 
     public function removeMember($userId)
     {
-        if ($this->isAdmin) {
-            $this->group->users()->detach($userId);
-            $this->loadAvailableUsers();
-            $this->dispatch('member-removed');
+        if (!$this->isAdmin) {
+            return;
         }
+
+        $this->group->users()->detach($userId);
+        $this->loadAvailableUsers();
+        $this->dispatch('member-removed');
     }
 
     public function saveChanges()
     {
+        if (!$this->isAdmin) {
+            return;
+        }
+
         $this->validate();
 
         $this->group->name = $this->groupName;
@@ -120,6 +156,10 @@ class GroupManagement extends Component
 
     public function openDeleteModal()
     {
+        if (!$this->isAdmin) {
+            return;
+        }
+
         $this->showDeleteModal = true;
         $this->dispatch('open-modal', 'delete-group-modal');
     }
@@ -162,9 +202,12 @@ class GroupManagement extends Component
 
     public function render()
     {
-        $this->loadAvailableUsers();
+        if ($this->isAdmin) {
+            $this->loadAvailableUsers();
+        }
+
         return view('livewire.group-management', [
-            'availableUsers' => $this->availableUsers
+            'availableUsers' => $this->isAdmin ? $this->availableUsers : collect([])
         ]);
     }
 }
