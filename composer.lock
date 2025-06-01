@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "074784d2d9ebe6f06f3cbed1cd376724",
+    "content-hash": "f1dc124143278be91eebf2ab151415ff",
     "packages": [
         {
             "name": "awssat/laravel-visits",
@@ -4554,16 +4554,16 @@
         },
         {
             "name": "spatie/livewire-filepond",
-            "version": "1.4.1",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/spatie/livewire-filepond.git",
-                "reference": "d08f8b00537b2c39cfa87e5891594f1fc6c43a2d"
+                "reference": "fd91404aab616ef2093f21971242ea7f25e285b2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/spatie/livewire-filepond/zipball/d08f8b00537b2c39cfa87e5891594f1fc6c43a2d",
-                "reference": "d08f8b00537b2c39cfa87e5891594f1fc6c43a2d",
+                "url": "https://api.github.com/repos/spatie/livewire-filepond/zipball/fd91404aab616ef2093f21971242ea7f25e285b2",
+                "reference": "fd91404aab616ef2093f21971242ea7f25e285b2",
                 "shasum": ""
             },
             "require": {
@@ -4573,7 +4573,7 @@
                 "spatie/laravel-package-tools": "^1.16"
             },
             "require-dev": {
-                "larastan/larastan": "^2.9",
+                "larastan/larastan": "^3.1",
                 "laravel/pint": "^1.14",
                 "nunomaduro/collision": "^8.1.1||^7.10.0",
                 "orchestra/testbench": "^9.0.0||^8.22.0||^10.0",
@@ -4620,7 +4620,7 @@
             ],
             "support": {
                 "issues": "https://github.com/spatie/livewire-filepond/issues",
-                "source": "https://github.com/spatie/livewire-filepond/tree/1.4.1"
+                "source": "https://github.com/spatie/livewire-filepond/tree/1.5.0"
             },
             "funding": [
                 {
@@ -4628,7 +4628,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-02-21T14:01:32+00:00"
+            "time": "2025-05-26T07:34:37+00:00"
         },
         {
             "name": "spatie/temporary-directory",

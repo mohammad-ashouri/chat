@@ -108,78 +108,112 @@
         </div>
 
         <!-- Chat Area -->
-        <div class="flex-1 flex flex-col">
+        <div class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
             @if($selectedChat)
-                <div class="p-4 border-b bg-white dark:bg-gray-800 dark:border-gray-700">
-                    @if($selectedChat->is_group)
-                        <div class="flex items-center">
+                <!-- Chat Header -->
+                <div class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+                    <div class="flex items-center">
+                        @if($selectedChat->is_group)
                             <div
-                                class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-300 font-semibold ml-3">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                </svg>
+                                class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white ml-3">
+                                <i class="fas fa-users"></i>
                             </div>
                             <div>
                                 <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $selectedChat->name }}</h2>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ $selectedChat->users->count() }}
                                     عضو</p>
                             </div>
-                            @if($selectedChat->is_group)
-                                <div class="mr-auto">
-                                    <livewire:group-management :group="$selectedChat"/>
-                                </div>
-                            @endif
-                        </div>
-                    @else
-                        <div class="flex items-center">
+                            <div class="mr-auto">
+                                <livewire:group-management :group="$selectedChat"/>
+                            </div>
+                        @else
                             <div
-                                class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-semibold ml-3">
-                                {{ substr($selectedChat->otherUser()->name, 0, 1) }}
+                                class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-300 ml-3">
+                                {{ substr($selectedChat->users->where('id', '!=', auth()->id())->first()->name, 0, 1) }}
                             </div>
                             <div>
-                                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $selectedChat->otherUser()->name }}</h2>
+                                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ $selectedChat->users->where('id', '!=', auth()->id())->first()->name }}</h2>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $selectedChat->otherUser()->isOnline() ? 'آنلاین' : 'آفلاین' }}
+                                    {{ $selectedChat->users->where('id', '!=', auth()->id())->first()->isOnline() ? 'آنلاین' : 'آفلاین' }}
                                 </p>
                             </div>
-                        </div>
-                    @endif
-                </div>
-
-                <div class="flex-1 p-4 overflow-y-auto bg-gray-50 dark:bg-gray-900" id="chat-messages">
-                    <div class="flex-1 overflow-y-auto p-4 space-y-4">
-                        @foreach($messages as $message)
-                            <div
-                                class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
-                                <div
-                                    class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200' }} rounded-lg px-4 py-2">
-                                    <div class="text-sm">{{ $message->content }}</div>
-                                    <div
-                                        class="text-xs mt-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
-                                        {{ $message->user->name }} - {{ $message->created_at->format('H:i') }}
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
+                        @endif
                     </div>
                 </div>
 
-                <div class="border-t dark:border-gray-700 p-4 bg-white dark:bg-gray-800">
-                    <form wire:submit="sendMessage" class="flex space-x-2 rtl:space-x-reverse">
-                        <input type="text"
-                               wire:model.live.debounce.1000ms="message"
-                               placeholder="پیام خود را بنویسید..."
-                               class="flex-1 border dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+                <!-- Messages -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages">
+                    @foreach($messages as $message)
+                        <div class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
+                            <div
+                                class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' }} rounded-lg p-3">
+                                @if($message->file_path)
+                                    <div class="mb-2">
+                                        <a href="{{ Storage::url($message->file_path) }}" target="_blank"
+                                           class="flex items-center text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
+                                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor"
+                                                 viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                      d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                            </svg>
+                                            دانلود پیوست
+                                        </a>
+                                    </div>
+                                @endif
+                                @if($message->content)
+                                    <div>{{ $message->content }}</div>
+                                @endif
+                                <div
+                                    class="text-xs mt-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                    {{ $message->created_at->format('H:i') }}
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <!-- Message Input -->
+                <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 ">
+                    <form wire:submit.prevent="sendMessage" class="flex items-center gap-2">
+                        <div class="flex-1 flex items-center">
+                            <label class="cursor-pointer">
+                                <input type="file" wire:model="file" class="hidden">
+                                <svg
+                                    class="w-6 h-6 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                </svg>
+                            </label>
+                            <input type="text" wire:model="message" placeholder="پیام خود را بنویسید..."
+                                   class="flex-1 px-4 py-2 border dark:border-gray-600 rounded-lg ml-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400">
+                        </div>
                         <button type="submit"
                                 class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-400">
                             ارسال
                         </button>
                     </form>
+                    @if($file)
+                        <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <span>{{ $file->getClientOriginalName() }}</span>
+                            <button wire:click="$set('file', null)"
+                                    class="mr-2 text-red-500 hover:text-red-700 dark:hover:text-red-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    @endif
+                    @if(session()->has('error'))
+                        <div class="mt-2 text-red-500 dark:text-red-400 text-sm">
+                            {{ session('error') }}
+                        </div>
+                    @endif
                 </div>
             @else
                 <div class="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                    برای شروع چت، یک کاربر را انتخاب کنید یا یک گروه جدید ایجاد کنید
+                    برای شروع گفتگو، یک کاربر را انتخاب کنید یا یک گروه جدید ایجاد کنید
                 </div>
             @endif
         </div>

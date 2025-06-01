@@ -13,6 +13,7 @@ use Livewire\WithFileUploads;
 use App\Livewire\CreateGroupModal;
 use App\Livewire\NewMessageModal;
 use App\Livewire\GroupManagement;
+use Illuminate\Support\Facades\Storage;
 
 #[Title('پیام ها')]
 class ChatRoom extends Component
@@ -28,9 +29,11 @@ class ChatRoom extends Component
     public $attachment;
     public $search = '';
     public $isNewMessageModalOpen = false;
+    public $file = null;
+    public $draft = '';
 
     protected $listeners = [
-        'chatSelected' => 'handleChatSelected',
+        'chatSelected' => 'loadChat',
         'messageReceived' => 'refreshMessages',
         'userSelected' => 'handleUserSelected',
         'newMessageModalOpened' => 'handleNewMessageModalOpened',
@@ -59,14 +62,44 @@ class ChatRoom extends Component
 
     public function loadUsers()
     {
-        // Get users that the current user has chatted with
-        $this->users = User::whereHas('chats', function ($query) {
-            $query->whereHas('users', function ($q) {
-                $q->where('users.id', auth()->id());
-            });
-        })
-            ->where('id', '!=', auth()->id())
+        $this->users = User::where('id', '!=', auth()->id())
+            ->when($this->search, function ($query) {
+                $query->where('name', 'like', '%' . $this->search . '%');
+            })
             ->get();
+    }
+
+    public function loadChat($chatId)
+    {
+        $this->selectedChat = Chat::with(['messages.user', 'users'])
+            ->findOrFail($chatId);
+        $this->loadMessages();
+        $this->loadDraft();
+    }
+
+    public function loadMessages()
+    {
+        if ($this->selectedChat) {
+            $this->messages = $this->selectedChat->messages()
+                ->with('user')
+                ->orderBy('created_at', 'asc')
+                ->get();
+        }
+    }
+
+    public function loadDraft()
+    {
+        if ($this->selectedChat) {
+            $draft = Message::where('chat_id', $this->selectedChat->id)
+                ->where('user_id', auth()->id())
+                ->where('is_draft', true)
+                ->latest()
+                ->first();
+
+            if ($draft) {
+                $this->message = $draft->content;
+            }
+        }
     }
 
     public function handleUserSelected($userId)
@@ -169,7 +202,7 @@ class ChatRoom extends Component
                     ->where('chat_id', $this->selectedChat->id)
                     ->delete();
             } else {
-                $this->dispatch('saveDraft')->self();
+                $this->saveDraft();
             }
         }
     }
@@ -191,26 +224,45 @@ class ChatRoom extends Component
 
     public function sendMessage()
     {
-        if (empty($this->message)) {
-            return;
+        if (!$this->selectedChat) return;
+        if (empty($this->message) && !$this->file) return;
+
+        try {
+            $filePath = null;
+            $fileName = null;
+            $fileType = null;
+            $fileSize = null;
+
+            if ($this->file) {
+                $filePath = $this->file->store('chat-files');
+                $fileName = $this->file->getClientOriginalName();
+                $fileType = $this->file->getClientMimeType();
+                $fileSize = $this->file->getSize();
+            }
+
+            $message = Message::create([
+                'chat_id' => $this->selectedChat->id,
+                'user_id' => auth()->id(),
+                'content' => $this->message ?: $fileName,
+                'file_path' => $filePath,
+                'file_name' => $fileName,
+                'file_type' => $fileType,
+                'file_size' => $fileSize,
+                'is_draft' => false
+            ]);
+
+            $this->message = '';
+            $this->file = null;
+
+            // Delete draft
+            Draft::where('user_id', auth()->id())
+                ->where('chat_id', $this->selectedChat->id)
+                ->delete();
+
+            $this->loadMessages();
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error sending message: ' . $e->getMessage());
         }
-
-        Message::create([
-            'chat_id' => $this->selectedChat->id,
-            'user_id' => auth()->id(),
-            'content' => $this->message
-        ]);
-
-        // Delete draft after sending message
-        Draft::where('user_id', auth()->id())
-            ->where('chat_id', $this->selectedChat->id)
-            ->delete();
-
-        $this->message = '';
-        $this->loadChats();
-        $this->handleChatSelected($this->selectedChat->id);
-
-        $this->dispatch('message-sent');
     }
 
     public function refreshMessages()
@@ -226,6 +278,27 @@ class ChatRoom extends Component
     public function handleNewMessageModalClosed()
     {
         $this->isNewMessageModalOpen = false;
+    }
+
+    public function startChat($userId)
+    {
+        $chat = Chat::whereHas('users', function ($query) use ($userId) {
+            $query->where('users.id', $userId);
+        })->whereHas('users', function ($query) {
+            $query->where('users.id', auth()->id());
+        })->first();
+
+        if (!$chat) {
+            $chat = Chat::create();
+            $chat->users()->attach([auth()->id(), $userId]);
+        }
+
+        $this->loadChat($chat->id);
+    }
+
+    public function updatedSearch()
+    {
+        $this->loadUsers();
     }
 
     public function render()

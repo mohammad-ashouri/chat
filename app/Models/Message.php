@@ -15,8 +15,10 @@ class Message extends Model
         'chat_id',
         'user_id',
         'content',
-        'attachment',
-        'attachment_type'
+        'file_path',
+        'file_name',
+        'file_type',
+        'file_size',
     ];
 
     public function chat()
