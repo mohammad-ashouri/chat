@@ -109,8 +109,8 @@
                                     </div>
                                 @endif
                                 <div>
-                                    <div class="font-medium text-gray-200">{{ $user->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $user->email }}</div>
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">{{ $user->name }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $user->email }}</div>
                                 </div>
                             </div>
                         @endforeach

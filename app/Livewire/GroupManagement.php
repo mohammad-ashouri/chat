@@ -118,11 +118,23 @@ class GroupManagement extends Component
             return;
         }
 
-        $this->group->users()->attach($this->selectedUsers);
-        $this->selectedUsers = [];
-        $this->search = '';
-        $this->loadAvailableUsers();
-        $this->dispatch('member-added');
+        try {
+            $this->group->users()->attach($this->selectedUsers);
+            $this->selectedUsers = [];
+            $this->search = '';
+            $this->loadAvailableUsers();
+
+            // Refresh the group data
+            $this->group->refresh();
+
+            // Dispatch events for UI updates
+            $this->dispatch('member-added');
+            $this->dispatch('group-updated');
+            $this->dispatch('refresh-sidebar');
+            $this->dispatch('refresh-chat');
+        } catch (\Exception $e) {
+            Log::error('Error adding members to group: ' . $e->getMessage());
+        }
     }
 
     public function removeMember($userId)
@@ -145,6 +157,7 @@ class GroupManagement extends Component
         $this->validate();
 
         $this->group->name = $this->groupName;
+        $this->group->users()->attach($this->selectedUsers);
         $this->group->save();
 
         $this->showModal = false;
