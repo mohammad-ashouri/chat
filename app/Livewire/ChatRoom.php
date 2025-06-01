@@ -153,6 +153,11 @@ class ChatRoom extends Component
 
         // Save selected chat ID to localStorage
         $this->dispatch('saveSelectedChat', chatId: $chatId);
+
+        // Dispatch update-group event for group management
+        if ($chat->is_group) {
+            $this->dispatch('update-group', chatId: $chatId);
+        }
     }
 
     public function updatedMessage()

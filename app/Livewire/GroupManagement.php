@@ -28,10 +28,20 @@ class GroupManagement extends Component
         'group.is_public' => 'boolean',
     ];
 
+    protected $listeners = [
+        'group-updated' => 'refreshGroup',
+        'update-group' => 'updateGroup'
+    ];
+
     public function mount(Chat $group)
     {
         $this->group = $group;
         $this->groupName = $group->name;
+        $this->selectedUsers = [];
+        $this->search = '';
+        $this->showModal = false;
+        $this->showDeleteModal = false;
+        $this->showSuccessModal = false;
 
         // Debug information
         Log::info('Group Management Debug', [
@@ -198,6 +208,18 @@ class GroupManagement extends Component
 
         // Redirect to chat page without refresh
         return redirect()->route('chat', [], false);
+    }
+
+    public function updateGroup($chatId)
+    {
+        $this->group = Chat::find($chatId);
+        $this->mount($this->group);
+    }
+
+    public function refreshGroup()
+    {
+        $this->group->refresh();
+        $this->mount($this->group);
     }
 
     public function render()
