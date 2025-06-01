@@ -32,15 +32,6 @@
                                           placeholder="نام گروه را وارد کنید"/>
                         </div>
                     </div>
-
-                    <div class="flex items-center space-x-4 mb-4">
-                        <label class="flex items-center">
-                            <input type="checkbox" wire:model="group.is_public"
-                                   class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                            <span
-                                class="mr-2 text-sm text-gray-600 dark:text-gray-400">قابل مشاهده برای همه کاربران</span>
-                        </label>
-                    </div>
                 </div>
             @endif
 
