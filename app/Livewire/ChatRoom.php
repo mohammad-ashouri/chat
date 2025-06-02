@@ -29,10 +29,20 @@ class ChatRoom extends Component
     public $attachment;
     public $search = '';
     public $isNewMessageModalOpen = false;
-    public $file = null;
+    public $files = [];
+    public $newFile = null;
     public $draft = '';
     public $isUploading = false;
     public $isSending = false;
+    public $error = null;
+
+    protected $allowedExtensions = [
+        'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg',  // images
+        'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm',   // videos
+        'mp3', 'wav', 'ogg', 'm4a', 'aac',                  // audio
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt',  // documents
+        'zip', 'rar', '7z'                                  // archives
+    ];
 
     protected $listeners = [
         'chatSelected' => 'loadChat',
@@ -225,60 +235,107 @@ class ChatRoom extends Component
         }
     }
 
-    public function updatedFile()
+    public function updatedNewFile()
     {
-        if ($this->file) {
-            $this->isUploading = true;
-            $this->isSending = true;
+        if ($this->newFile) {
+            // Convert single file to array if needed
+            $newFiles = is_array($this->newFile) ? $this->newFile : [$this->newFile];
+
+            // Check if adding new files would exceed the limit
+            if (count($this->files) + count($newFiles) > 15) {
+                $this->showError('حداکثر 15 فایل می‌توانید آپلود کنید.');
+                $this->newFile = null;
+                return;
+            }
+
+            // Check file extensions
+            foreach ($newFiles as $file) {
+                $extension = strtolower(pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION));
+                if (!in_array($extension, $this->allowedExtensions)) {
+                    $this->showError('پسوند فایل ' . strtoupper($extension) . ' مجاز نیست.');
+                    $this->newFile = null;
+                    return;
+                }
+            }
+
+            // Add new files to existing files
+            foreach ($newFiles as $file) {
+                $this->files[] = $file;
+            }
+
+            // Clear the newFile property
+            $this->newFile = null;
+        }
+    }
+
+    public function removeFile($index)
+    {
+        if (isset($this->files[$index])) {
+            unset($this->files[$index]);
+            $this->files = array_values($this->files); // Re-index array
+
+            // If no files left, reset upload status
+            if (empty($this->files)) {
+                $this->isUploading = false;
+                $this->isSending = false;
+            }
         }
     }
 
     public function sendMessage()
     {
         if (!$this->selectedChat) return;
-        if (empty($this->message) && !$this->file) return;
+        if (empty($this->message) && empty($this->files)) return;
 
         try {
             $this->isSending = true;
-            $filePath = null;
-            $fileName = null;
-            $fileType = null;
-            $fileSize = null;
+            $filePaths = [];
+            $fileNames = [];
+            $fileTypes = [];
+            $fileSizes = [];
 
-            if ($this->file) {
+            if (!empty($this->files)) {
                 $this->isUploading = true;
-                $filePath = $this->file->store('chat-files');
-                $fileName = $this->file->getClientOriginalName();
-                $fileType = $this->file->getClientMimeType();
-                $fileSize = $this->file->getSize();
-                $this->isUploading = false;
+                foreach ($this->files as $file) {
+                    $filePaths[] = $file->store('chat-files');
+                    $fileNames[] = $file->getClientOriginalName();
+                    $fileTypes[] = $file->getMimeType();
+                    $fileSizes[] = $file->getSize();
+                }
             }
 
             $message = Message::create([
                 'chat_id' => $this->selectedChat->id,
                 'user_id' => auth()->id(),
-                'content' => $this->message ?: $fileName,
-                'file_path' => $filePath,
-                'file_name' => $fileName,
-                'file_type' => $fileType,
-                'file_size' => $fileSize,
-                'is_draft' => false
+                'content' => $this->message,
+                'file_path' => !empty($filePaths) ? json_encode($filePaths) : null,
+                'file_name' => !empty($fileNames) ? json_encode($fileNames) : null,
+                'file_type' => !empty($fileTypes) ? json_encode($fileTypes) : null,
+                'file_size' => !empty($fileSizes) ? json_encode($fileSizes) : null,
             ]);
 
+            // Clear the message and files
             $this->message = '';
-            $this->file = null;
+            $this->files = [];
+            $this->isUploading = false;
+            $this->isSending = false;
 
             // Delete draft
             Draft::where('user_id', auth()->id())
                 ->where('chat_id', $this->selectedChat->id)
                 ->delete();
 
+            // Refresh messages
             $this->loadMessages();
-            $this->isSending = false;
+            $this->loadChats();
+
+            // Dispatch event for real-time updates
+            $this->dispatch('message-sent');
+
         } catch (\Exception $e) {
-            $this->isSending = false;
+            session()->flash('error', 'خطا در ارسال پیام: ' . $e->getMessage());
             $this->isUploading = false;
-            session()->flash('error', 'Error sending message: ' . $e->getMessage());
+            $this->isSending = false;
         }
     }
 
@@ -324,5 +381,38 @@ class ChatRoom extends Component
     public function render()
     {
         return view('livewire.chat-room');
+    }
+
+    private function getFileTypeLabel($fileName)
+    {
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg'];
+        $videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'];
+        $audioExtensions = ['mp3', 'wav', 'ogg', 'm4a', 'aac'];
+        $documentExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt'];
+
+        if (in_array($extension, $imageExtensions)) {
+            return 'دانلود عکس';
+        } elseif (in_array($extension, $videoExtensions)) {
+            return 'دانلود فیلم';
+        } elseif (in_array($extension, $audioExtensions)) {
+            return 'دانلود صوت';
+        } elseif (in_array($extension, $documentExtensions)) {
+            return 'دانلود فایل';
+        } else {
+            return 'دانلود ' . strtoupper($extension);
+        }
+    }
+
+    public function showError($message)
+    {
+        $this->error = $message;
+        $this->dispatch('show-error');
+    }
+
+    public function dismissError()
+    {
+        $this->error = null;
     }
 }
