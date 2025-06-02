@@ -156,6 +156,15 @@
                                 class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
                                 <div
                                     class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' }} rounded-lg p-3">
+                                    @if($message->original_sender_id)
+                                        <div class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600">
+                                            <button wire:click="startChat({{ $message->original_sender_id }})"
+                                                    class="text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
+                                                <i class="fas fa-share-alt mr-1"></i>
+                                                پیام فوروارد شده از {{ $message->originalSender->name }}
+                                            </button>
+                                        </div>
+                                    @endif
                                     @if($message->file_path)
                                         <div class="mb-2 space-y-2">
                                             @php
@@ -180,8 +189,14 @@
                                         <div>{{ $message->content }}</div>
                                     @endif
                                     <div
-                                        class="text-xs mt-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                        class="text-xs mt-1 flex items-center justify-end {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
                                         {{ $message->created_at->format('H:i') }}
+                                        @if(!$message->is_system)
+                                            <button wire:click="openForwardModal({{ $message->id }})"
+                                                    class="mr-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
+                                                <i class="fas fa-share text-sm"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -294,6 +309,7 @@
             @endif
         </div>
     </div>
+    <livewire:forward-message-modal/>
 </div>
 
 <script>

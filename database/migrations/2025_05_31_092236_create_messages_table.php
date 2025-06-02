@@ -19,6 +19,8 @@ return new class extends Migration {
             $table->string('attachment_type')->nullable();
             $table->timestamp('read_at')->nullable();
             $table->boolean('is_system')->default(false);
+            $table->foreignId('original_message_id')->nullable()->constrained('messages')->nullOnDelete();
+            $table->foreignId('original_sender_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

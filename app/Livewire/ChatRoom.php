@@ -14,6 +14,7 @@ use App\Livewire\CreateGroupModal;
 use App\Livewire\NewMessageModal;
 use App\Livewire\GroupManagement;
 use Illuminate\Support\Facades\Storage;
+use App\Livewire\ForwardMessageModal;
 
 #[Title('پیام ها')]
 class ChatRoom extends Component
@@ -54,7 +55,8 @@ class ChatRoom extends Component
         'refresh-sidebar' => 'refreshChats',
         'refresh-chat' => 'refreshMessages',
         'refresh-messages' => 'refreshMessages',
-        'group-deleted' => 'handleGroupDeleted'
+        'group-deleted' => 'handleGroupDeleted',
+        'message-forwarded' => 'handleMessageForwarded'
     ];
 
     public function mount()
@@ -94,7 +96,7 @@ class ChatRoom extends Component
     {
         if ($this->selectedChat) {
             $this->messages = $this->selectedChat->messages()
-                ->with('user')
+                ->with(['user', 'originalSender'])
                 ->orderBy('created_at', 'asc')
                 ->get();
         }
@@ -359,18 +361,33 @@ class ChatRoom extends Component
 
     public function startChat($userId)
     {
-        $chat = Chat::whereHas('users', function ($query) use ($userId) {
-            $query->where('users.id', $userId);
-        })->whereHas('users', function ($query) {
+        // Check if a direct chat already exists between these users
+        $existingChat = Chat::whereHas('users', function ($query) use ($userId) {
             $query->where('users.id', auth()->id());
-        })->first();
+        })
+            ->whereHas('users', function ($query) use ($userId) {
+            $query->where('users.id', $userId);
+            })
+            ->where('is_group', false)
+            ->first();
 
-        if (!$chat) {
-            $chat = Chat::create();
+        if ($existingChat) {
+            $this->handleChatSelected($existingChat->id);
+        } else {
+            // Create a new chat
+            $chat = Chat::create([
+                'is_group' => false
+            ]);
+
+            // Attach both users to the chat
             $chat->users()->attach([auth()->id(), $userId]);
+
+            $this->loadChats();
+            $this->handleChatSelected($chat->id);
         }
 
-        $this->loadChat($chat->id);
+        // Save selected chat ID to localStorage
+        $this->dispatch('saveSelectedChat', chatId: $existingChat ? $existingChat->id : $chat->id);
     }
 
     public function updatedSearch()
@@ -378,9 +395,27 @@ class ChatRoom extends Component
         $this->loadUsers();
     }
 
+    public function handleMessageForwarded($chatId)
+    {
+        // If the forwarded message is in the current chat, refresh messages
+        if ($this->selectedChat && $this->selectedChat->id === $chatId) {
+            $this->refreshMessages();
+        }
+
+        // Refresh the chat list to update last message
+        $this->loadChats();
+    }
+
+    public function openForwardModal($messageId)
+    {
+        $this->dispatch('openForwardModal', messageId: $messageId)->to('forward-message-modal');
+    }
+
     public function render()
     {
-        return view('livewire.chat-room');
+        return view('livewire.chat-room', [
+            'forwardMessageModal' => new ForwardMessageModal()
+        ]);
     }
 
     private function getFileTypeLabel($fileName)

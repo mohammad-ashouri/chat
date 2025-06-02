@@ -19,7 +19,9 @@ class Message extends Model
         'file_name',
         'file_type',
         'file_size',
-        'is_system'
+        'is_system',
+        'original_message_id',
+        'original_sender_id'
     ];
 
     public function chat()
@@ -30,6 +32,16 @@ class Message extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function originalMessage()
+    {
+        return $this->belongsTo(Message::class, 'original_message_id');
+    }
+
+    public function originalSender()
+    {
+        return $this->belongsTo(User::class, 'original_sender_id');
     }
 
     public function readBy()
