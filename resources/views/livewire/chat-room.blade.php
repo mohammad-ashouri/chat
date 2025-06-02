@@ -168,12 +168,17 @@
                                     @if($message->original_sender_id)
                                         <div
                                             class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600 text-sm break-words">
-                                            <button wire:click.stop="startChat({{ $message->original_sender_id }})"
-                                                    class="text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
-                                                <i class="fas fa-share-alt mr-1"></i>
-                                                پیام فوروارد شده از <span
-                                                    class="font-semibold">{{ $message->originalSender->name }}</span>
-                                            </button>
+                                            <i class="fas fa-share-alt mr-1"></i>
+                                            پیام فوروارد شده از
+                                            @if($message->original_sender_id === auth()->id())
+                                                <span class="font-semibold">شما</span>
+                                            @else
+                                                <button wire:click.stop="startChat({{ $message->original_sender_id }})"
+                                                        class="text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
+                                                    <span
+                                                        class="font-semibold">{{ $message->originalSender->name }}</span>
+                                                </button>
+                                            @endif
                                         </div>
                                     @endif
                                     @if($message->file_path)
