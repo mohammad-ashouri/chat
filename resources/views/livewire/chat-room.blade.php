@@ -153,15 +153,26 @@
                             </div>
                         @else
                             <div
-                                class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
+                                class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }} mb-2">
+                                {{-- User avatar/initials can go here if needed for left-aligned messages --}}
                                 <div
-                                    class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' }} rounded-lg p-3">
+                                    class="max-w-[55%] w-auto {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' }} rounded-lg p-3 relative group {{ in_array($message->id, $selectedMessages) ? ($message->user_id === auth()->id() ? 'ring-2 ring-blue-300 dark:ring-blue-600' : 'ring-2 ring-gray-400 dark:ring-gray-500') : '' }}"
+                                    wire:click="toggleMessageSelection({{ $message->id }})"
+                                    style="cursor: pointer;">
+                                    @if(in_array($message->id, $selectedMessages))
+                                        <div
+                                            class="absolute {{ $message->user_id === auth()->id() ? '-left-2' : '-left-2' }} -top-2 bg-blue-500 text-white rounded-full p-1 z-10">
+                                            <i class="fas fa-check text-xs"></i>
+                                        </div>
+                                    @endif
                                     @if($message->original_sender_id)
-                                        <div class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600">
-                                            <button wire:click="startChat({{ $message->original_sender_id }})"
+                                        <div
+                                            class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600 text-sm break-words">
+                                            <button wire:click.stop="startChat({{ $message->original_sender_id }})"
                                                     class="text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
                                                 <i class="fas fa-share-alt mr-1"></i>
-                                                پیام فوروارد شده از {{ $message->originalSender->name }}
+                                                پیام فوروارد شده از <span
+                                                    class="font-semibold">{{ $message->originalSender->name }}</span>
                                             </button>
                                         </div>
                                     @endif
@@ -186,17 +197,17 @@
                                         </div>
                                     @endif
                                     @if($message->content)
-                                        <div>{{ $message->content }}</div>
+                                        <div class="break-words text-sm leading-relaxed">{{ $message->content }}</div>
                                     @endif
-                                    <div
-                                        class="text-xs mt-1 flex items-center justify-end {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
-                                        {{ $message->created_at->format('H:i') }}
-                                        @if(!$message->is_system)
-                                            <button wire:click="openForwardModal({{ $message->id }})"
-                                                    class="mr-2 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200">
-                                                <i class="fas fa-share text-sm"></i>
-                                            </button>
-                                        @endif
+                                    <div class="flex items-center justify-between mt-1">
+                                        <div
+                                            class="text-xs {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                            {{ $message->created_at->format('H:i') }}
+                                        </div>
+                                        <button wire:click.stop="openForwardModal({{ $message->id }})"
+                                                class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-sm hover:text-blue-300 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                            <i class="fas fa-share-alt"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -206,6 +217,25 @@
 
                 <!-- Message Input -->
                 <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+                    @if(count($selectedMessages) > 0)
+                        <div class="mb-4 flex items-center justify-between">
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                {{ count($selectedMessages) }} پیام انتخاب شده
+                            </div>
+                            <div class="flex gap-2">
+                                <button wire:click="forwardSelectedMessages"
+                                        class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-400 transition-colors duration-200">
+                                    <i class="fas fa-share-alt mr-1"></i>
+                                    فوروارد پیام‌های انتخاب شده
+                                </button>
+                                <button wire:click="clearSelectedMessages"
+                                        class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-400 transition-colors duration-200">
+                                    <i class="fas fa-times mr-1"></i>
+                                    لغو انتخاب
+                                </button>
+                            </div>
+                        </div>
+                    @endif
                     <form wire:submit.prevent="sendMessage" class="flex items-center gap-2">
                         <div
                             class="flex-1 flex items-center bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-1 border border-gray-200 dark:border-gray-600 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all duration-200">

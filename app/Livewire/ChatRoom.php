@@ -36,6 +36,7 @@ class ChatRoom extends Component
     public $isUploading = false;
     public $isSending = false;
     public $error = null;
+    public $selectedMessages = [];
 
     protected $allowedExtensions = [
         'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg',  // images
@@ -163,6 +164,9 @@ class ChatRoom extends Component
 
     public function handleChatSelected($chatId)
     {
+        // Clear selected messages when changing chat
+        $this->selectedMessages = [];
+
         // Save current draft if exists
         if ($this->selectedChat && !empty($this->message)) {
             $this->saveDraft();
@@ -409,6 +413,27 @@ class ChatRoom extends Component
     public function openForwardModal($messageId)
     {
         $this->dispatch('openForwardModal', messageId: $messageId)->to('forward-message-modal');
+    }
+
+    public function forwardSelectedMessages()
+    {
+        if (empty($this->selectedMessages)) return;
+
+        $this->dispatch('openForwardModal', messageIds: $this->selectedMessages)->to('forward-message-modal');
+    }
+
+    public function clearSelectedMessages()
+    {
+        $this->selectedMessages = [];
+    }
+
+    public function toggleMessageSelection($messageId)
+    {
+        if (in_array($messageId, $this->selectedMessages)) {
+            $this->selectedMessages = array_diff($this->selectedMessages, [$messageId]);
+        } else {
+            $this->selectedMessages[] = $messageId;
+        }
     }
 
     public function render()
