@@ -23,7 +23,7 @@ class ForwardMessageModal extends Component
         $this->loadChats();
     }
 
-    public function openModal($messageIds)
+    public function openModal($messageIds = null)
     {
         $this->messageIds = is_array($messageIds) ? $messageIds : [$messageIds];
         $this->showModal = true;
@@ -35,9 +35,24 @@ class ForwardMessageModal extends Component
         $this->chats = auth()->user()->chats()
             ->with(['users', 'lastMessage'])
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%');
+                $query->where(function ($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhereHas('users', function ($q) {
+                            $q->where('name', 'like', '%' . $this->search . '%')
+                                ->where('users.id', '!=', auth()->id());
+                        });
+                });
             })
-            ->get();
+            ->get()
+            ->map(function ($chat) {
+                if (!$chat->is_group) {
+                    $otherUser = $chat->users()
+                        ->where('users.id', '!=', auth()->id())
+                        ->first();
+                    $chat->other_user = $otherUser;
+                }
+                return $chat;
+            });
     }
 
     public function updatedSearch()

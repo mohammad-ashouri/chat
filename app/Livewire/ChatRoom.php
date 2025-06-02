@@ -37,6 +37,7 @@ class ChatRoom extends Component
     public $isSending = false;
     public $error = null;
     public $selectedMessages = [];
+    public $replyingTo = null;
 
     protected $allowedExtensions = [
         'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg',  // images
@@ -318,11 +319,13 @@ class ChatRoom extends Component
                 'file_name' => !empty($fileNames) ? json_encode($fileNames) : null,
                 'file_type' => !empty($fileTypes) ? json_encode($fileTypes) : null,
                 'file_size' => !empty($fileSizes) ? json_encode($fileSizes) : null,
+                'reply_to_id' => $this->replyingTo ? $this->replyingTo->id : null,
             ]);
 
-            // Clear the message and files
+            // Clear the message, files and reply
             $this->message = '';
             $this->files = [];
+            $this->replyingTo = null;
             $this->isUploading = false;
             $this->isSending = false;
 
@@ -434,6 +437,25 @@ class ChatRoom extends Component
         } else {
             $this->selectedMessages[] = $messageId;
         }
+    }
+
+    public function replyToMessage($messageId)
+    {
+        $message = Message::find($messageId);
+        if ($message) {
+            $this->replyingTo = $message;
+            $this->dispatch('focus-message-input');
+        }
+    }
+
+    public function cancelReply()
+    {
+        $this->replyingTo = null;
+    }
+
+    public function scrollToMessage($messageId)
+    {
+        $this->dispatch('scroll-to-message', messageId: $messageId);
     }
 
     public function render()

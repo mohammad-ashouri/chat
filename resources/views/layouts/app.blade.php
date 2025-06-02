@@ -9,6 +9,10 @@
 
     <title>{{ 'پیام رسان شناخت | ' . $title ?? 'پیام رسان شناخت' }}</title>
 
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"
+          integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
+
     <!-- Scripts -->
     <link rel="stylesheet" href="/build/plugins/tagify/tagify.css">
     <script src="/build/plugins/tagify/tagify.min.js"></script>

@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->string('attachment_type')->nullable();
             $table->timestamp('read_at')->nullable();
             $table->boolean('is_system')->default(false);
+            $table->foreignId('reply_to_id')->nullable()->constrained('messages')->nullOnDelete();
             $table->timestamps();
         });
     }

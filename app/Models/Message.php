@@ -21,7 +21,8 @@ class Message extends Model
         'file_size',
         'is_system',
         'original_message_id',
-        'original_sender_id'
+        'original_sender_id',
+        'reply_to_id'
     ];
 
     public function chat()
@@ -42,6 +43,16 @@ class Message extends Model
     public function originalSender()
     {
         return $this->belongsTo(User::class, 'original_sender_id');
+    }
+
+    public function replyTo()
+    {
+        return $this->belongsTo(Message::class, 'reply_to_id');
+    }
+
+    public function replies()
+    {
+        return $this->hasMany(Message::class, 'reply_to_id');
     }
 
     public function readBy()
