@@ -31,6 +31,8 @@ class ChatRoom extends Component
     public $isNewMessageModalOpen = false;
     public $file = null;
     public $draft = '';
+    public $isUploading = false;
+    public $isSending = false;
 
     protected $listeners = [
         'chatSelected' => 'loadChat',
@@ -223,22 +225,33 @@ class ChatRoom extends Component
         }
     }
 
+    public function updatedFile()
+    {
+        if ($this->file) {
+            $this->isUploading = true;
+            $this->isSending = true;
+        }
+    }
+
     public function sendMessage()
     {
         if (!$this->selectedChat) return;
         if (empty($this->message) && !$this->file) return;
 
         try {
+            $this->isSending = true;
             $filePath = null;
             $fileName = null;
             $fileType = null;
             $fileSize = null;
 
             if ($this->file) {
+                $this->isUploading = true;
                 $filePath = $this->file->store('chat-files');
                 $fileName = $this->file->getClientOriginalName();
                 $fileType = $this->file->getClientMimeType();
                 $fileSize = $this->file->getSize();
+                $this->isUploading = false;
             }
 
             $message = Message::create([
@@ -261,7 +274,10 @@ class ChatRoom extends Component
                 ->delete();
 
             $this->loadMessages();
+            $this->isSending = false;
         } catch (\Exception $e) {
+            $this->isSending = false;
+            $this->isUploading = false;
             session()->flash('error', 'Error sending message: ' . $e->getMessage());
         }
     }
