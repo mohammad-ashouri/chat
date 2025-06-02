@@ -58,7 +58,8 @@ class ChatRoom extends Component
         'refresh-chat' => 'refreshMessages',
         'refresh-messages' => 'refreshMessages',
         'group-deleted' => 'handleGroupDeleted',
-        'message-forwarded' => 'handleMessageForwarded'
+        'message-forwarded' => 'handleMessageForwarded',
+        'clear-selected-messages' => 'clearSelectedMessages'
     ];
 
     public function mount()
@@ -404,17 +405,23 @@ class ChatRoom extends Component
 
     public function handleMessageForwarded($chatId)
     {
-        // If the forwarded message is in the current chat, refresh messages
+        \Log::info('ChatRoom::handleMessageForwarded called', ['chatId' => $chatId]);
+
+        // اگر چت فعلی همان چتی است که پیام به آن فوروارد شده، پیام‌ها را رفرش کن
         if ($this->selectedChat && $this->selectedChat->id === $chatId) {
             $this->refreshMessages();
         }
 
-        // Refresh the chat list to update last message
+        // لیست چت‌ها را رفرش کن
         $this->loadChats();
+
+        // پیام‌های انتخاب شده را پاک کن
+        $this->selectedMessages = [];
     }
 
     public function openForwardModal($messageId)
     {
+        \Log::info('ChatRoom::openForwardModal called', ['messageId' => $messageId]);
         $this->dispatch('openForwardModal', messageId: $messageId)->to('forward-message-modal');
     }
 

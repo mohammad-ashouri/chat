@@ -25,6 +25,8 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+    @livewireScripts
+    @stack('scripts')
 
     <script>
         // Check for saved dark mode preference

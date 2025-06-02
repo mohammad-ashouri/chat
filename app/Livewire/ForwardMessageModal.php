@@ -20,12 +20,18 @@ class ForwardMessageModal extends Component
 
     public function mount()
     {
+        \Log::info('ForwardMessageModal::mount called');
         $this->loadChats();
     }
 
-    public function openModal($messageIds = null)
+    public function openModal($messageId = null)
     {
-        $this->messageIds = is_array($messageIds) ? $messageIds : [$messageIds];
+        \Log::info('ForwardMessageModal::openModal called', ['messageId' => $messageId]);
+
+        if ($messageId) {
+            $this->messageIds = [$messageId];
+        }
+
         $this->showModal = true;
         $this->loadChats();
     }
@@ -62,14 +68,26 @@ class ForwardMessageModal extends Component
 
     public function forwardMessage($chatId)
     {
-        if (empty($this->messageIds)) return;
+        \Log::info('ForwardMessageModal::forwardMessage called', ['chatId' => $chatId, 'messageIds' => $this->messageIds]);
+
+        if (empty($this->messageIds)) {
+            \Log::error('No message IDs provided for forwarding');
+            return;
+        }
 
         $chat = Chat::find($chatId);
-        if (!$chat) return;
+        if (!$chat) {
+            \Log::error('Chat not found', ['chatId' => $chatId]);
+            return;
+        }
 
+        $forwardedCount = 0;
         foreach ($this->messageIds as $messageId) {
             $originalMessage = Message::find($messageId);
-            if (!$originalMessage) continue;
+            if (!$originalMessage) {
+                \Log::error('Original message not found', ['messageId' => $messageId]);
+                continue;
+            }
 
             // Create the forwarded message
             Message::create([
@@ -83,7 +101,11 @@ class ForwardMessageModal extends Component
                 'original_message_id' => $originalMessage->id,
                 'original_sender_id' => $originalMessage->user_id
             ]);
+
+            $forwardedCount++;
         }
+
+        \Log::info('Messages forwarded successfully', ['count' => $forwardedCount]);
 
         $this->showModal = false;
         $this->messageIds = [];
@@ -94,6 +116,8 @@ class ForwardMessageModal extends Component
         $this->dispatch('message-forwarded', chatId: $chatId);
         $this->dispatch('refresh-messages')->to('chat-room');
         $this->dispatch('clear-selected-messages')->to('chat-room');
+
+        \Log::info('ForwardMessageModal::forwardMessage completed', ['chatId' => $chatId]);
     }
 
     public function render()
