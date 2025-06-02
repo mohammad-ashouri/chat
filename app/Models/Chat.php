@@ -43,6 +43,11 @@ class Chat extends Model
         return $this->hasOne(Message::class)->latest();
     }
 
+    public function histories(): HasMany
+    {
+        return $this->hasMany(GroupHistory::class);
+    }
+
     public function isGroup(): bool
     {
         return (bool)$this->is_group;

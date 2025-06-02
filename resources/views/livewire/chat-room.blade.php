@@ -144,31 +144,42 @@
                 <!-- Messages -->
                 <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages">
                     @foreach($messages as $message)
-                        <div class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
-                            <div
-                                class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' }} rounded-lg p-3">
-                                @if($message->file_path)
-                                    <div class="mb-2">
-                                        <a href="{{ Storage::url($message->file_path) }}" target="_blank"
-                                           class="flex items-center text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
-                                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor"
-                                                 viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
-                                            </svg>
-                                            دانلود پیوست
-                                        </a>
-                                    </div>
-                                @endif
-                                @if($message->content)
-                                    <div>{{ $message->content }}</div>
-                                @endif
+                        @if($message->is_system)
+                            <div class="flex justify-center my-2">
                                 <div
-                                    class="text-xs mt-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
-                                    {{ $message->created_at->format('H:i') }}
+                                    class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm px-4 py-2 rounded-full">
+                                    {{ $message->content }}
                                 </div>
                             </div>
-                        </div>
+                        @else
+                            <div
+                                class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }}">
+                                <div
+                                    class="max-w-[70%] {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' }} rounded-lg p-3">
+                                    @if($message->file_path)
+                                        <div class="mb-2">
+                                            <a href="{{ Storage::url($message->file_path) }}" target="_blank"
+                                               class="flex items-center text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
+                                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor"
+                                                     viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          stroke-width="2"
+                                                          d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                                </svg>
+                                                دانلود پیوست
+                                            </a>
+                                        </div>
+                                    @endif
+                                    @if($message->content)
+                                        <div>{{ $message->content }}</div>
+                                    @endif
+                                    <div
+                                        class="text-xs mt-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                        {{ $message->created_at->format('H:i') }}
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     @endforeach
                 </div>
 

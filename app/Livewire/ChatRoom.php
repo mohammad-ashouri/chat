@@ -41,6 +41,7 @@ class ChatRoom extends Component
         'group-updated' => 'refreshChats',
         'refresh-sidebar' => 'refreshChats',
         'refresh-chat' => 'refreshMessages',
+        'refresh-messages' => 'refreshMessages',
         'group-deleted' => 'handleGroupDeleted'
     ];
 
@@ -267,7 +268,10 @@ class ChatRoom extends Component
 
     public function refreshMessages()
     {
-        $this->selectedChat->refresh();
+        if ($this->selectedChat) {
+            $this->selectedChat->refresh();
+            $this->loadMessages();
+        }
     }
 
     public function handleNewMessageModalOpened()

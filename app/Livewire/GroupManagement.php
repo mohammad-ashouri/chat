@@ -120,6 +120,17 @@ class GroupManagement extends Component
 
         try {
             $this->group->users()->attach($this->selectedUsers);
+
+            // Add system messages for each new member
+            foreach ($this->selectedUsers as $userId) {
+                $user = User::find($userId);
+                $this->group->messages()->create([
+                    'user_id' => auth()->id(),
+                    'content' => $user->name . ' به گروه اضافه شد',
+                    'is_system' => true
+                ]);
+            }
+
             $this->selectedUsers = [];
             $this->search = '';
             $this->loadAvailableUsers();
@@ -143,9 +154,38 @@ class GroupManagement extends Component
             return;
         }
 
+        $user = User::find($userId);
+
+        // Add history before removing the member
+        $this->group->histories()->create([
+            'user_id' => auth()->id(),
+            'event_type' => 'member_removed',
+            'description' => $user->name . ' از گروه حذف شد',
+            'metadata' => [
+                'removed_user_id' => $userId,
+                'removed_user_name' => $user->name
+            ]
+        ]);
+
+        // Add system message
+        $this->group->messages()->create([
+            'user_id' => auth()->id(),
+            'content' => $user->name . ' از گروه حذف شد',
+            'is_system' => true
+        ]);
+
         $this->group->users()->detach($userId);
         $this->loadAvailableUsers();
+
+        // Refresh the group data
+        $this->group->refresh();
+
+        // Dispatch events for UI updates
         $this->dispatch('member-removed');
+        $this->dispatch('group-updated');
+        $this->dispatch('refresh-sidebar')->to('chat-room');
+        $this->dispatch('refresh-chat')->to('chat-room');
+        $this->dispatch('refresh-messages')->to('chat-room');
     }
 
     public function saveChanges()
@@ -198,6 +238,16 @@ class GroupManagement extends Component
         if (!$this->isAdmin) {
             return;
         }
+
+        // Add history before deleting the group
+        $this->group->histories()->create([
+            'user_id' => auth()->id(),
+            'event_type' => 'group_deleted',
+            'description' => 'گروه توسط ' . auth()->user()->name . ' حذف شد',
+            'metadata' => [
+                'group_name' => $this->group->name
+            ]
+        ]);
 
         // Delete group profile image if exists
         if ($this->group->profile_photo_path) {

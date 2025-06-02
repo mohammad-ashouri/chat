@@ -19,6 +19,7 @@ class Message extends Model
         'file_name',
         'file_type',
         'file_size',
+        'is_system'
     ];
 
     public function chat()

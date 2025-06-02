@@ -49,7 +49,35 @@ class CreateGroupModal extends Component
             'user_id' => auth()->id()
         ]);
 
+        // Add group creation history
+        $chat->histories()->create([
+            'user_id' => auth()->id(),
+            'event_type' => 'group_created',
+            'description' => 'گروه توسط ' . auth()->user()->name . ' ایجاد شد',
+            'metadata' => [
+                'group_name' => $this->groupName
+            ]
+        ]);
+
+        // Add system message for group creation
+        $chat->messages()->create([
+            'user_id' => auth()->id(),
+            'content' => 'گروه توسط ' . auth()->user()->name . ' ایجاد شد',
+            'is_system' => true
+        ]);
+
+        // Attach both users to the chat
         $chat->users()->attach(array_merge($this->selectedUsers, [auth()->id()]));
+
+        // Add system messages for each member addition
+        foreach ($this->selectedUsers as $userId) {
+            $user = User::find($userId);
+            $chat->messages()->create([
+                'user_id' => auth()->id(),
+                'content' => $user->name . ' به گروه اضافه شد',
+                'is_system' => true
+            ]);
+        }
 
         $this->dispatch('chatSelected', chatId: $chat->id);
         $this->closeModal();

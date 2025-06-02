@@ -10,15 +10,13 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('messages', function (Blueprint $table) {
+        Schema::create('group_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('chat_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->text('content')->nullable();
-            $table->string('attachment')->nullable();
-            $table->string('attachment_type')->nullable();
-            $table->timestamp('read_at')->nullable();
-            $table->boolean('is_system')->default(false);
+            $table->string('event_type'); // group_created, member_added, member_removed, etc.
+            $table->text('description');
+            $table->json('metadata')->nullable(); // Additional data like affected user IDs
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('messages');
+        Schema::dropIfExists('group_histories');
     }
-};
+}; 
