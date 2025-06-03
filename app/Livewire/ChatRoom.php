@@ -38,6 +38,7 @@ class ChatRoom extends Component
     public $error = null;
     public $selectedMessages = [];
     public $replyingTo = null;
+    public $loading = false;
 
     protected $allowedExtensions = [
         'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg',  // images
