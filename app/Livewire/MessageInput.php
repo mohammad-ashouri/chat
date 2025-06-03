@@ -14,6 +14,7 @@ class MessageInput extends Component
 
     public $message = '';
     public $files = [];
+    public $newFile = null;
     public $isUploading = false;
     public $error = null;
     public $replyingTo = null;
@@ -58,16 +59,23 @@ class MessageInput extends Component
 
     public function updatedNewFile()
     {
-        $this->isUploading = true;
-        $this->validate([
-            'newFile.*' => 'max:10240', // 10MB Max
-        ]);
+        if ($this->newFile) {
+            $this->isUploading = true;
 
-        foreach ($this->newFile as $file) {
-            $this->files[] = $file;
+            // Convert single file to array if needed
+            $newFiles = is_array($this->newFile) ? $this->newFile : [$this->newFile];
+
+            $this->validate([
+                'newFile.*' => 'max:10240', // 10MB Max
+            ]);
+
+            foreach ($newFiles as $file) {
+                $this->files[] = $file;
+            }
+
+            $this->newFile = null;
+            $this->isUploading = false;
         }
-
-        $this->isUploading = false;
     }
 
     public function removeFile($index)
