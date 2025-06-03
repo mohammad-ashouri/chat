@@ -59,13 +59,20 @@ class ChatRoom extends Component
         'refresh-messages' => 'refreshMessages',
         'group-deleted' => 'handleGroupDeleted',
         'message-forwarded' => 'handleMessageForwarded',
-        'clear-selected-messages' => 'clearSelectedMessages'
+        'clear-selected-messages' => 'clearSelectedMessages',
+        'message-sent' => '$refresh',
+        'forwardSelectedMessages' => 'forwardSelectedMessages',
     ];
 
     public function mount()
     {
         $this->loadChats();
         $this->loadUsers();
+
+        // Check if there's a selected chat in localStorage
+        if (request()->has('selectedChatId')) {
+            $this->handleChatSelected(request()->get('selectedChatId'));
+        }
     }
 
     public function loadChats()
@@ -164,53 +171,73 @@ class ChatRoom extends Component
         $this->dispatch('saveSelectedChat', chatId: null);
     }
 
+    public function selectChat($chatId)
+    {
+        $this->handleChatSelected($chatId);
+    }
+
     public function handleChatSelected($chatId)
     {
-        // Clear selected messages when changing chat
-        $this->selectedMessages = [];
+        try {
+            // Convert to integer if possible
+            $chatId = is_numeric($chatId) ? (int)$chatId : $chatId;
 
-        // Save current draft if exists
-        if ($this->selectedChat && !empty($this->message)) {
-            $this->saveDraft();
-        }
+            // If it's an array, try to get the id
+            if (is_array($chatId)) {
+                $chatId = $chatId['id'] ?? null;
+            }
 
-        $chat = Chat::with(['users', 'messages.user'])->find($chatId);
+            // If we still don't have a valid ID, return
+            if (!$chatId) {
+                $this->selectedChat = null;
+                $this->messages = collect();
+                $this->dispatch('setChat', chat: null)->to('message-input');
+                $this->dispatch('saveSelectedChat', chatId: null);
+                return;
+            }
 
-        if (!$chat) {
-            $this->selectedChat = null;
-            $this->messages = [];
-            $this->message = '';
+            $chat = Chat::with(['users', 'messages.user', 'messages.replyTo.user', 'messages.originalSender'])
+                ->find($chatId);
+
+            if (!$chat) {
+                $this->selectedChat = null;
+                $this->messages = collect();
+                $this->dispatch('setChat', chat: null)->to('message-input');
+                $this->dispatch('saveSelectedChat', chatId: null);
+                return;
+            }
+
+            $this->selectedChat = $chat;
+            $this->messages = $chat->messages()->with(['user', 'replyTo.user', 'originalSender'])->get();
+            $this->selectedMessages = [];
+
+            $this->dispatch('setChat', chat: $chat)->to('message-input');
+            $this->dispatch('saveSelectedChat', chatId: $chatId);
+            $this->dispatch('messages-loaded');
+
+            // Mark messages as read
+            $chat->messages()
+                ->where('user_id', '!=', auth()->id())
+                ->whereNull('read_at')
+                ->get()
+                ->each
+                ->markAsRead();
+
+            // Refresh chats list
             $this->loadChats();
-            return;
-        }
 
-        $this->selectedChat = $chat;
-        $this->messages = $this->selectedChat->messages()->with('user')->orderBy('created_at', 'asc')->get();
+            // Scroll to bottom after a short delay to ensure DOM is updated
+            $this->dispatch('scroll-to-bottom');
+        } catch (\Exception $e) {
+            \Log::error('Error in handleChatSelected: ' . $e->getMessage(), [
+                'chatId' => $chatId,
+                'type' => gettype($chatId)
+            ]);
 
-        // Load draft if exists
-        $draft = Draft::where('user_id', auth()->id())
-            ->where('chat_id', $chatId)
-            ->first();
-
-        $this->message = $draft ? $draft->content : '';
-
-        // Mark unread messages as read for both direct and group chats
-        $this->selectedChat->messages()
-            ->where('user_id', '!=', auth()->id())
-            ->whereNull('read_at')
-            ->get()
-            ->each
-            ->markAsRead();
-
-        // Refresh the chat list to update unread counts
-        $this->loadChats();
-
-        // Save selected chat ID to localStorage
-        $this->dispatch('saveSelectedChat', chatId: $chatId);
-
-        // Dispatch update-group event for group management
-        if ($chat->is_group) {
-            $this->dispatch('update-group', chatId: $chatId);
+            $this->selectedChat = null;
+            $this->messages = collect();
+            $this->dispatch('setChat', chat: null)->to('message-input');
+            $this->dispatch('saveSelectedChat', chatId: null);
         }
     }
 
@@ -354,6 +381,7 @@ class ChatRoom extends Component
         if ($this->selectedChat) {
             $this->selectedChat->refresh();
             $this->loadMessages();
+            $this->scrollToBottom();
         }
     }
 
@@ -427,14 +455,15 @@ class ChatRoom extends Component
 
     public function forwardSelectedMessages()
     {
-        if (empty($this->selectedMessages)) return;
-
-        $this->dispatch('openForwardModal', messageIds: $this->selectedMessages)->to('forward-message-modal');
+        if (count($this->selectedMessages) > 0) {
+            $this->dispatch('openForwardModal', messageIds: $this->selectedMessages);
+        }
     }
 
     public function clearSelectedMessages()
     {
         $this->selectedMessages = [];
+        $this->dispatch('clearSelectedMessages')->to('message-input');
     }
 
     public function toggleMessageSelection($messageId)
@@ -450,8 +479,7 @@ class ChatRoom extends Component
     {
         $message = Message::find($messageId);
         if ($message) {
-            $this->replyingTo = $message;
-            $this->dispatch('focus-message-input');
+            $this->dispatch('setReplyingTo', message: $message)->to('message-input');
         }
     }
 
@@ -463,6 +491,11 @@ class ChatRoom extends Component
     public function scrollToMessage($messageId)
     {
         $this->dispatch('scroll-to-message', messageId: $messageId);
+    }
+
+    public function scrollToBottom()
+    {
+        $this->dispatch('scroll-to-bottom');
     }
 
     public function render()
