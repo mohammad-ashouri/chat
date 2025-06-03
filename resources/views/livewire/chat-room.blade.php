@@ -372,6 +372,11 @@
         document.addEventListener('livewire:initialized', () => {
             Livewire.on('message-sent', () => {
                 scrollToBottom();
+                // Focus the input after sending message
+                const input = document.querySelector('input[type="text"]');
+                if (input) {
+                    input.focus();
+                }
             });
         });
 

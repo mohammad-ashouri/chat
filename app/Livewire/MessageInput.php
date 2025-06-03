@@ -116,6 +116,7 @@ class MessageInput extends Component
 
         $this->dispatch('message-sent')->to('chat-room');
         $this->dispatch('refresh-chat')->to('chat-room');
+        $this->dispatch('focus-message-input');
     }
 
     public function cancelReply()

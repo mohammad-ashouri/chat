@@ -60,7 +60,11 @@
             </label>
             <input type="text" wire:model="message" placeholder="پیام خود را بنویسید..."
                    class="flex-1 bg-transparent border-0 focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                   wire:loading.attr="disabled" wire:target="sendMessage">
+                   wire:loading.attr="disabled" wire:target="sendMessage"
+                   x-data
+                   x-init="$el.focus()"
+                   x-on:focus="$el.focus()"
+                   autofocus>
         </div>
         <button type="submit"
                 class="bg-blue-500 text-white w-12 h-12 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-400 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
