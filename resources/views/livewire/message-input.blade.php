@@ -45,7 +45,8 @@
             </div>
         </div>
     @endif
-    <form wire:submit.prevent="sendMessage" class="flex items-center gap-2">
+        <form wire:submit.prevent="sendMessage" class="flex items-center gap-2" x-data="{ localMessage: '' }"
+              x-init="$wire.on('message-sent', () => { localMessage = '' })">
         <div
             class="flex-1 flex items-center bg-gray-50 dark:bg-gray-700 rounded-lg px-3 py-1 border border-gray-200 dark:border-gray-600 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all duration-200">
             <label class="cursor-pointer group" wire:loading.attr="disabled" wire:target="newFile">
@@ -58,17 +59,22 @@
                           d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                 </svg>
             </label>
-            <input type="text" wire:model="message" placeholder="پیام خود را بنویسید..."
+            <input type="text"
+                   x-model="localMessage"
+                   placeholder="پیام خود را بنویسید..."
                    class="flex-1 bg-transparent border-0 focus:ring-0 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-                   wire:loading.attr="disabled" wire:target="sendMessage"
-                   x-data
+                   wire:loading.attr="disabled"
+                   wire:target="sendMessage"
                    x-init="$el.focus()"
                    x-on:focus="$el.focus()"
                    autofocus>
         </div>
         <button type="submit"
                 class="bg-blue-500 text-white w-12 h-12 rounded-lg hover:bg-blue-600 dark:hover:bg-blue-400 flex items-center justify-center transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                wire:loading.attr="disabled" wire:target="sendMessage, newFile">
+                wire:loading.attr="disabled"
+                wire:target="sendMessage, newFile"
+                x-bind:disabled="!localMessage.trim() && !$wire.files.length"
+                x-on:click="if(localMessage.trim() || $wire.files.length) { $wire.set('message', localMessage); setTimeout(() => { localMessage = '' }, 100) }">
             <span wire:loading.remove wire:target="sendMessage, newFile">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -146,4 +152,4 @@
             {{ $error }}
         </div>
     @endif
-</div> 
+</div>
