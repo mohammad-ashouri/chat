@@ -478,7 +478,7 @@ class ChatRoom extends Component
 
     public function replyToMessage($messageId)
     {
-        $message = Message::find($messageId);
+        $message = Message::with('user')->find($messageId);
         if ($message) {
             $this->dispatch('setReplyingTo', message: $message)->to('message-input');
         }

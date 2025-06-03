@@ -39,7 +39,11 @@ class MessageInput extends Component
 
     public function setReplyingTo($message)
     {
-        $this->replyingTo = $message;
+        if (is_array($message)) {
+            $this->replyingTo = Message::with('user')->find($message['id']);
+        } else {
+            $this->replyingTo = $message;
+        }
     }
 
     public function setSelectedMessages($messages)
