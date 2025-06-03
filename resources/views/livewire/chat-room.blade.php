@@ -148,8 +148,72 @@
                                     </p>
                                 </div>
                             @endif
+
+                                <!-- Search Input -->
+                                <div class="mr-auto ml-4 relative">
+                                    <div class="relative">
+                                        <input type="text"
+                                               wire:model.live.debounce.300ms="searchQuery"
+                                               wire:keydown.enter="searchMessages"
+                                               placeholder="جستجو در پیام‌ها..."
+                                               class="w-64 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                               minlength="3">
+                                        <div class="absolute left-3 top-2.5">
+                                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
+                                                 viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
                         </div>
                     </div>
+
+                    <!-- Search Results -->
+                    @if($searchQuery && strlen($searchQuery) >= 3)
+                        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <button title="قبلی" wire:click="previousSearchResult"
+                                            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed relative group"
+                                            @if($currentSearchIndex <= 0) disabled @endif>
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                        @if($currentSearchIndex <= 0)
+                                            <span
+                                                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                                اولین نتیجه
+                                            </span>
+                                        @endif
+                                    </button>
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">
+                                        {{ $currentSearchIndex + 1 }} از {{ count($searchResults) }}
+                                    </span>
+                                    <button title="بعدی" wire:click="nextSearchResult"
+                                            class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed relative group"
+                                            @if($currentSearchIndex >= count($searchResults) - 1) disabled @endif>
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M15 19l-7-7 7-7"/>
+                                        </svg>
+                                        @if($currentSearchIndex >= count($searchResults) - 1)
+                                            <span
+                                                class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                                                آخرین نتیجه
+                                            </span>
+                                        @endif
+                                    </button>
+                                </div>
+                                <button wire:click="clearSearch"
+                                        class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                    بستن
+                                </button>
+                            </div>
+                        </div>
+                    @endif
 
                     <!-- Messages -->
                     <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages">
@@ -163,7 +227,7 @@
                                 </div>
                             @else
                                 <div
-                                    class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }} mb-4 message-animation group"
+                                    class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }} mb-4 message-animation group {{ isset($searchResults[$currentSearchIndex]) && $searchResults[$currentSearchIndex]->id === $message->id ? 'search-highlight' : '' }}"
                                     data-message-id="{{ $message->id }}">
                                     @if($message->user_id === auth()->id())
                                         <!-- Message Actions for sent messages -->
@@ -508,6 +572,33 @@
             100% {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        /* Search highlight animation */
+        .search-highlight {
+            animation: searchHighlight 1s ease-out forwards;
+        }
+
+        @keyframes searchHighlight {
+            0% {
+                background-color: transparent;
+            }
+            100% {
+                background-color: rgba(59, 130, 246, 0.2);
+            }
+        }
+
+        .dark .search-highlight {
+            animation: searchHighlightDark 1s ease-out forwards;
+        }
+
+        @keyframes searchHighlightDark {
+            0% {
+                background-color: transparent;
+            }
+            100% {
+                background-color: rgba(59, 130, 246, 0.15);
             }
         }
     </style>

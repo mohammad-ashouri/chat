@@ -39,6 +39,9 @@ class ChatRoom extends Component
     public $selectedMessages = [];
     public $replyingTo = null;
     public $loading = false;
+    public $searchQuery = '';
+    public $searchResults = [];
+    public $currentSearchIndex = -1;
 
     protected $allowedExtensions = [
         'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg',  // images
@@ -497,6 +500,69 @@ class ChatRoom extends Component
     public function scrollToBottom()
     {
         $this->dispatch('scroll-to-bottom');
+    }
+
+    public function searchMessages()
+    {
+        if (strlen($this->searchQuery) < 3) {
+            return;
+        }
+
+        $this->searchResults = $this->selectedChat->messages()
+            ->with(['user'])
+            ->where(function ($query) {
+                $query->where('content', 'like', '%' . $this->searchQuery . '%')
+                    ->orWhere('file_name', 'like', '%' . $this->searchQuery . '%');
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Reset current index and scroll to first result if any
+        $this->currentSearchIndex = -1;
+        if (count($this->searchResults) > 0) {
+            $this->nextSearchResult();
+        }
+    }
+
+    public function clearSearch()
+    {
+        $this->searchQuery = '';
+        $this->searchResults = [];
+        $this->currentSearchIndex = -1;
+    }
+
+    public function updatedSearchQuery()
+    {
+        if (strlen($this->searchQuery) >= 3) {
+            $this->searchMessages();
+        } else {
+            $this->searchResults = [];
+            $this->currentSearchIndex = -1;
+        }
+    }
+
+    public function nextSearchResult()
+    {
+        if (count($this->searchResults) === 0) {
+            return;
+        }
+
+        if ($this->currentSearchIndex < count($this->searchResults) - 1) {
+            $this->currentSearchIndex++;
+            $this->scrollToMessage($this->searchResults[$this->currentSearchIndex]->id);
+        }
+    }
+
+    public function previousSearchResult()
+    {
+        if (count($this->searchResults) === 0) {
+            return;
+        }
+
+        if ($this->currentSearchIndex > 0) {
+            $this->currentSearchIndex--;
+            $this->scrollToMessage($this->searchResults[$this->currentSearchIndex]->id);
+        }
     }
 
     public function render()
