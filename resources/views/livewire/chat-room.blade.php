@@ -163,7 +163,8 @@
                                 </div>
                             @else
                                 <div
-                                    class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }} mb-2">
+                                    class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }} mb-2 message-animation"
+                                    data-message-id="{{ $message->id }}">
                                     <div
                                         class="max-w-[55%] w-auto {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' }} rounded-lg p-3 relative group {{ in_array($message->id, $selectedMessages) ? ($message->user_id === auth()->id() ? 'ring-2 ring-blue-300 dark:ring-blue-600' : 'ring-2 ring-gray-400 dark:ring-gray-500') : '' }}"
                                         data-message-id="{{ $message->id }}">
@@ -427,6 +428,22 @@
             }
             100% {
                 background-color: transparent;
+            }
+        }
+
+        /* Message animation styles */
+        .message-animation {
+            animation: messageAppear 0.3s ease-out forwards;
+        }
+
+        @keyframes messageAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
             }
         }
     </style>
