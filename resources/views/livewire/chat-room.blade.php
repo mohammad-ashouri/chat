@@ -163,10 +163,34 @@
                                 </div>
                             @else
                                 <div
-                                    class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }} mb-2 message-animation"
+                                    class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }} mb-4 message-animation group"
                                     data-message-id="{{ $message->id }}">
+                                    @if($message->user_id === auth()->id())
+                                        <!-- Message Actions for sent messages -->
+                                        <div
+                                            class="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button wire:click.stop="replyToMessage({{ $message->id }})"
+                                                    class="p-1.5 rounded-full bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-sm transition-colors duration-200">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                     viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          stroke-width="2"
+                                                          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                                </svg>
+                                            </button>
+                                            <button wire:click.stop="openForwardModal({{ $message->id }})"
+                                                    class="p-1.5 rounded-full bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-sm transition-colors duration-200">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                     viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          stroke-width="2"
+                                                          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    @endif
                                     <div
-                                        class="max-w-[55%] w-auto {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100' }} rounded-lg p-3 relative group {{ in_array($message->id, $selectedMessages) ? ($message->user_id === auth()->id() ? 'ring-2 ring-blue-300 dark:ring-blue-600' : 'ring-2 ring-gray-400 dark:ring-gray-500') : '' }}"
+                                        class="max-w-[70%] w-auto {{ $message->user_id === auth()->id() ? 'bg-blue-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100' }} rounded-lg p-4 relative shadow-sm {{ in_array($message->id, $selectedMessages) ? ($message->user_id === auth()->id() ? 'ring-2 ring-blue-300 dark:ring-blue-600' : 'ring-2 ring-gray-400 dark:ring-gray-500') : '' }}"
                                         data-message-id="{{ $message->id }}">
                                         @if(in_array($message->id, $selectedMessages))
                                             <div
@@ -174,54 +198,81 @@
                                                 <i class="fas fa-check text-xs"></i>
                                             </div>
                                         @endif
-                                        @if($selectedChat->is_group)
-                                            <div
-                                                class="text-xs mb-1 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
-                                                {{ $message->user_id === auth()->id() ? 'شما' : $message->user->name }}
-                                            </div>
-                                        @endif
-                                        @if($message->original_sender_id)
-                                            <div
-                                                class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600 text-sm break-words">
-                                                <svg class="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor"
-                                                     viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          stroke-width="2"
-                                                          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                                                </svg>
-                                                پیام فوروارد شده از
-                                                @if($message->original_sender_id === auth()->id())
-                                                    <span class="font-semibold">شما</span>
-                                                @else
-                                                    <button
-                                                        wire:click.stop="startChat({{ $message->original_sender_id }})"
-                                                        class="text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
-                                                        <span
-                                                            class="font-semibold">{{ $message->originalSender->name }}</span>
-                                                    </button>
+
+                                            <!-- Sender Info -->
+                                            <div class="flex items-center gap-2 mb-2">
+                                                @if($selectedChat->is_group)
+                                                    <div class="flex-shrink-0">
+                                                        <div
+                                                            class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
+                                                            <span
+                                                                class="text-sm">{{ substr($message->user->name, 0, 1) }}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        class="text-sm font-medium {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-700 dark:text-gray-300' }}">
+                                                        {{ $message->user_id === auth()->id() ? 'شما' : $message->user->name }}
+                                                    </div>
                                                 @endif
+                                                <div
+                                                    class="text-xs {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                                    {{ $message->created_at->format('H:i') }}
+                                                </div>
+                                            </div>
+
+                                            <!-- Forwarded Message Info -->
+                                        @if($message->original_sender_id)
+                                                <div
+                                                    class="mb-2 pb-2 border-b {{ $message->user_id === auth()->id() ? 'border-blue-400' : 'border-gray-200 dark:border-gray-700' }} text-sm">
+                                                    <div
+                                                        class="flex items-center gap-1 text-xs {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                             viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  stroke-width="2"
+                                                                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                                        </svg>
+                                                        پیام فوروارد شده از
+                                                        @if($message->original_sender_id === auth()->id())
+                                                            <span class="font-semibold">شما</span>
+                                                        @else
+                                                            <button
+                                                                wire:click.stop="startChat({{ $message->original_sender_id }})"
+                                                                class="hover:underline font-semibold">
+                                                                {{ $message->originalSender->name }}
+                                                            </button>
+                                                        @endif
+                                                    </div>
                                             </div>
                                         @endif
+
+                                            <!-- Reply Info -->
                                         @if($message->replyTo)
-                                            <div
-                                                class="mb-2 pb-2 border-b border-gray-300 dark:border-gray-600 text-sm break-words">
-                                                <svg class="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor"
-                                                     viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          stroke-width="2"
-                                                          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                                                </svg>
-                                                در پاسخ به
-                                                <button wire:click.stop="scrollToMessage({{ $message->replyTo->id }})"
-                                                        class="text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
-                                                    <span
-                                                        class="font-semibold">{{ $message->replyTo->user->name }}</span>
-                                                </button>
-                                                <div class="text-gray-600 dark:text-gray-400 truncate">
+                                                <div
+                                                    class="mb-2 pb-2 border-b {{ $message->user_id === auth()->id() ? 'border-blue-400' : 'border-gray-200 dark:border-gray-700' }} text-sm">
+                                                    <div
+                                                        class="flex items-center gap-1 text-xs {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                             viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                  stroke-width="2"
+                                                                  d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                                        </svg>
+                                                        در پاسخ به
+                                                        <button
+                                                            wire:click.stop="scrollToMessage({{ $message->replyTo->id }})"
+                                                            class="hover:underline font-semibold">
+                                                            {{ $message->replyTo->user->name }}
+                                                        </button>
+                                                    </div>
+                                                    <div
+                                                        class="text-sm {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-600 dark:text-gray-400' }} truncate mt-1">
                                                     {{ $message->replyTo->content }}
                                                 </div>
                                             </div>
                                         @endif
+
+                                            <!-- Files -->
                                         @if($message->file_path)
                                             <div class="mb-2 space-y-2">
                                                 @php
@@ -230,49 +281,57 @@
                                                 @endphp
                                                 @foreach($filePaths as $index => $filePath)
                                                     <a href="{{ Storage::url($filePath) }}" target="_blank"
-                                                       class="flex items-center text-sm hover:underline {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400' }}">
-                                                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor"
-                                                             viewBox="0 0 24 24">
+                                                       class="flex items-center gap-2 p-2 rounded-lg {{ $message->user_id === auth()->id() ? 'bg-blue-400/20' : 'bg-gray-100 dark:bg-gray-700' }} hover:opacity-80 transition-opacity">
+                                                        <svg class="w-5 h-5 flex-shrink-0" fill="none"
+                                                             stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                   stroke-width="2"
-                                                                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                                                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
                                                         </svg>
-                                                        {{ $this->getFileTypeLabel($fileNames[$index] ?? '') }}
+                                                        <div class="flex-1 min-w-0">
+                                                            <div class="text-sm font-medium truncate">
+                                                                {{ $fileNames[$index] ?? '' }}
+                                                            </div>
+                                                            <div
+                                                                class="text-xs {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
+                                                                {{ $this->getFileTypeLabel($fileNames[$index] ?? '') }}
+                                                            </div>
+                                                        </div>
                                                     </a>
                                                 @endforeach
                                             </div>
                                         @endif
+
+                                            <!-- Message Content -->
                                         @if($message->content)
-                                            <div
-                                                class="break-words text-sm leading-relaxed">{{ $message->content }}</div>
+                                                <div
+                                                    class="break-words text-sm leading-relaxed">{{ $message->content }}</div>
                                         @endif
-                                        <div class="flex items-center justify-between mt-2">
-                                            <div
-                                                class="text-xs {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
-                                                {{ $message->created_at->format('H:i') }}
-                                            </div>
-                                            <div class="flex items-center gap-2">
-                                                <button wire:click.stop="replyToMessage({{ $message->id }})"
-                                                        class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                         viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                              stroke-width="2"
-                                                              d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                                                    </svg>
-                                                </button>
-                                                <button wire:click.stop="openForwardModal({{ $message->id }})"
-                                                        class="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200 {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
-                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                         viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                              stroke-width="2"
-                                                              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </div>
                                     </div>
+                                    @if($message->user_id !== auth()->id())
+                                        <!-- Message Actions for received messages -->
+                                        <div
+                                            class="flex items-center gap-1 mr-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button wire:click.stop="replyToMessage({{ $message->id }})"
+                                                    class="p-1.5 rounded-full bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-sm transition-colors duration-200">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                     viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          stroke-width="2"
+                                                          d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                                                </svg>
+                                            </button>
+                                            <button wire:click.stop="openForwardModal({{ $message->id }})"
+                                                    class="p-1.5 rounded-full bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 shadow-sm transition-colors duration-200">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                     viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                          stroke-width="2"
+                                                          d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
                         @endforeach
