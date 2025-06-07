@@ -230,7 +230,11 @@
                             @else
                                 <div
                                     class="flex {{ $message->user_id === auth()->id() ? 'justify-end' : 'justify-start' }} mb-4 message-animation group {{ isset($searchResults[$currentSearchIndex]) && $searchResults[$currentSearchIndex]->id === $message->id ? 'search-highlight' : '' }}"
-                                    data-message-id="{{ $message->id }}">
+                                    id="message-{{ $message->id }}"
+                                    data-message-id="{{ $message->id }}"
+                                    x-data="{ isHighlighted: false }"
+                                    x-on:highlight.window="if($event.detail.messageId === {{ $message->id }}) { isHighlighted = true; setTimeout(() => isHighlighted = false, 2000) }"
+                                    :class="{ 'bg-blue-100 dark:bg-blue-900/20': isHighlighted }">
                                     @if($message->user_id === auth()->id())
                                         <!-- Message Actions for sent messages -->
                                         <div
@@ -315,7 +319,8 @@
                                             <!-- Reply Info -->
                                         @if($message->replyTo)
                                                 <div
-                                                    class="mb-2 pb-2 border-b {{ $message->user_id === auth()->id() ? 'border-blue-400' : 'border-gray-200 dark:border-gray-700' }} text-sm">
+                                                    class="mb-2 pb-2 border-b {{ $message->user_id === auth()->id() ? 'border-blue-400' : 'border-gray-200 dark:border-gray-700' }} text-sm cursor-pointer"
+                                                    wire:click.stop="scrollToMessage({{ $message->replyTo->id }})">
                                                     <div
                                                         class="flex items-center gap-1 text-xs {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor"
@@ -325,11 +330,9 @@
                                                                   d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
                                                         </svg>
                                                         در پاسخ به
-                                                        <button
-                                                            wire:click.stop="scrollToMessage({{ $message->replyTo->id }})"
-                                                            class="hover:underline font-semibold">
+                                                        <span class="font-semibold">
                                                             {{ $message->replyTo->user->name }}
-                                                        </button>
+                                                        </span>
                                                     </div>
                                                     <div
                                                         class="text-sm {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-600 dark:text-gray-400' }} truncate mt-1">
@@ -504,10 +507,7 @@
                     const messageElement = document.querySelector(`[data-message-id="${data.messageId}"]`);
                     if (messageElement) {
                         messageElement.scrollIntoView({behavior: 'smooth', block: 'center'});
-                        messageElement.classList.add('highlight-message');
-                        setTimeout(() => {
-                            messageElement.classList.remove('highlight-message');
-                        }, 2000);
+                        window.dispatchEvent(new CustomEvent('highlight', {detail: {messageId: data.messageId}}));
                     }
                 });
 
@@ -584,6 +584,33 @@
             }
             100% {
                 background-color: rgba(59, 130, 246, 0.15);
+            }
+        }
+
+        /* Reply highlight animation */
+        .reply-highlight {
+            animation: replyHighlight 2s ease-out forwards;
+        }
+
+        @keyframes replyHighlight {
+            0% {
+                background-color: rgba(59, 130, 246, 0.2);
+            }
+            100% {
+                background-color: transparent;
+            }
+        }
+
+        .dark .reply-highlight {
+            animation: replyHighlightDark 2s ease-out forwards;
+        }
+
+        @keyframes replyHighlightDark {
+            0% {
+                background-color: rgba(59, 130, 246, 0.15);
+            }
+            100% {
+                background-color: transparent;
             }
         }
     </style>
