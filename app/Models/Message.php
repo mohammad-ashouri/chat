@@ -73,4 +73,9 @@ class Message extends Model
     {
         return $this->readBy()->where('user_id', auth()->id())->exists();
     }
+
+    public function getJalaliCreatedAtAttribute()
+    {
+        return \Morilog\Jalali\Jalalian::fromDateTime($this->created_at)->format('H:i Y/m/d');
+    }
 }

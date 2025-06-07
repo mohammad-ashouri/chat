@@ -37,7 +37,7 @@
                                                     <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ $chat->name }}</p>
                                                     @if($chat->lastMessage)
                                                         <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                            {{ $chat->lastMessage->created_at->format('H:i') }}
+                                                            {{ $chat->lastMessage->jalali_created_at }}
                                                         </span>
                                                     @endif
                                                 </div>
@@ -82,7 +82,7 @@
                                                     <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{{ $otherUser->name }}</p>
                                                     @if($chat->lastMessage)
                                                         <span class="text-xs text-gray-500 dark:text-gray-400">
-                                                            {{ $chat->lastMessage->created_at->format('H:i') }}
+                                                            {{ $chat->lastMessage->jalali_created_at }}
                                                         </span>
                                                     @endif
                                                 </div>
@@ -223,6 +223,8 @@
                                     <div
                                         class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm px-4 py-2 rounded-full">
                                         {{ $message->content }}
+                                        <span
+                                            class="text-xs text-gray-500 dark:text-gray-400 mr-2">{{ $message->jalali_created_at }}</span>
                                     </div>
                                 </div>
                             @else
@@ -280,7 +282,7 @@
                                                 @endif
                                                 <div
                                                     class="text-xs {{ $message->user_id === auth()->id() ? 'text-blue-100' : 'text-gray-500 dark:text-gray-400' }}">
-                                                    {{ $message->created_at->format('H:i') }}
+                                                    {{ $message->jalali_created_at }}
                                                 </div>
                                             </div>
 

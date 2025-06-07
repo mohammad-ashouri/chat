@@ -31,4 +31,9 @@ class GroupHistory extends Model
     {
         return $this->belongsTo(User::class);
     }
-} 
+
+    public function getJalaliCreatedAtAttribute()
+    {
+        return \Morilog\Jalali\Jalalian::fromDateTime($this->created_at)->format('H:i Y/m/d');
+    }
+}
