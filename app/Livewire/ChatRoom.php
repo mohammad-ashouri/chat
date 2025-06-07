@@ -39,9 +39,13 @@ class ChatRoom extends Component
     public $selectedMessages = [];
     public $replyingTo = null;
     public $loading = false;
+    public $sidebarSearchQuery = '';
     public $searchQuery = '';
     public $searchResults = [];
     public $currentSearchIndex = -1;
+    public $showSidebarSearch = false;
+    public $isSearchLoading = false;
+    public $isToggleLoading = false;
 
     protected $allowedExtensions = [
         'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg',  // images
@@ -430,9 +434,39 @@ class ChatRoom extends Component
         $this->dispatch('saveSelectedChat', chatId: $existingChat ? $existingChat->id : $chat->id);
     }
 
-    public function updatedSearch()
+    public function updatedSidebarSearchQuery()
     {
-        $this->loadUsers();
+        if (empty($this->sidebarSearchQuery)) {
+            $this->loadChats();
+            return;
+        }
+
+        $this->isSearchLoading = true;
+
+        try {
+            $this->chats = auth()->user()->chats()
+                ->with(['users', 'lastMessage.user'])
+                ->where(function ($query) {
+                    $query->where(function ($q) {
+                        // Search in group names
+                        $q->where('is_group', true)
+                            ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($this->sidebarSearchQuery) . '%']);
+                    })->orWhere(function ($q) {
+                        // Search in direct chat participants
+                        $q->where('is_group', false)
+                            ->whereHas('users', function ($userQuery) {
+                                $userQuery->where('users.id', '!=', auth()->id())
+                                    ->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($this->sidebarSearchQuery) . '%']);
+                            });
+                    });
+                })
+                ->get()
+                ->sortByDesc(function ($chat) {
+                    return $chat->lastMessage?->created_at ?? $chat->created_at;
+                });
+        } finally {
+            $this->isSearchLoading = false;
+        }
     }
 
     public function handleMessageForwarded($chatId)
@@ -504,7 +538,9 @@ class ChatRoom extends Component
 
     public function searchMessages()
     {
-        if (strlen($this->searchQuery) < 3) {
+        if (!$this->selectedChat || strlen($this->searchQuery) < 3) {
+            $this->searchResults = [];
+            $this->currentSearchIndex = -1;
             return;
         }
 
@@ -524,13 +560,6 @@ class ChatRoom extends Component
         }
     }
 
-    public function clearSearch()
-    {
-        $this->searchQuery = '';
-        $this->searchResults = [];
-        $this->currentSearchIndex = -1;
-    }
-
     public function updatedSearchQuery()
     {
         if (strlen($this->searchQuery) >= 3) {
@@ -539,6 +568,13 @@ class ChatRoom extends Component
             $this->searchResults = [];
             $this->currentSearchIndex = -1;
         }
+    }
+
+    public function clearSearch()
+    {
+        $this->searchQuery = '';
+        $this->searchResults = [];
+        $this->currentSearchIndex = -1;
     }
 
     public function nextSearchResult()
@@ -603,5 +639,15 @@ class ChatRoom extends Component
     public function dismissError()
     {
         $this->error = null;
+    }
+
+    public function toggleSearch()
+    {
+        $this->isToggleLoading = true;
+        try {
+            $this->showSidebarSearch = !$this->showSidebarSearch;
+        } finally {
+            $this->isToggleLoading = false;
+        }
     }
 }
