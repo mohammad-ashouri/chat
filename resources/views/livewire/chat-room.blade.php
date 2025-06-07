@@ -115,7 +115,7 @@
             </div>
 
             <!-- Chat Area -->
-            <div class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+            <div class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900 relative">
                 @if($selectedChat)
                     <!-- Chat Header -->
                     <div class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
@@ -406,6 +406,38 @@
                         @endforeach
                     </div>
 
+                    <!-- Scroll Down Button -->
+                    <div
+                        x-data="{ showButton: false }"
+                        x-init="
+                            const chatMessages = document.getElementById('chat-messages');
+                            const checkScroll = () => {
+                                const isAtBottom = chatMessages.scrollHeight - chatMessages.scrollTop <= chatMessages.clientHeight + 50;
+                                showButton = !isAtBottom;
+                            };
+                            chatMessages.addEventListener('scroll', checkScroll);
+                            checkScroll();
+                        "
+                        class="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50"
+                        x-show="showButton"
+                        x-transition:enter="transition ease-out duration-300"
+                        x-transition:enter-start="opacity-0 transform scale-90"
+                        x-transition:enter-end="opacity-100 transform scale-100"
+                        x-transition:leave="transition ease-in duration-300"
+                        x-transition:leave-start="opacity-100 transform scale-100"
+                        x-transition:leave-end="opacity-0 transform scale-90"
+                    >
+                        <button
+                            @click="document.getElementById('chat-messages').scrollTo({ top: document.getElementById('chat-messages').scrollHeight, behavior: 'smooth' })"
+                            class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-all duration-200 transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-600 dark:hover:bg-blue-700"
+                            title="رفتن به آخرین پیام">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                            </svg>
+                        </button>
+                    </div>
+
                     <!-- Message Input -->
                     <div class="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
                         <livewire:message-input :chat="$selectedChat"/>
@@ -421,13 +453,37 @@
     <livewire:forward-message-modal/>
 
     <script>
-        // اسکرول به پایین هنگام بارگذاری چت یا ارسال پیام جدید
-        window.scrollToBottom = function () {
+        // اسکرول خودکار به پایین هنگام بارگذاری اولیه
+        document.addEventListener('DOMContentLoaded', function () {
             const chatMessages = document.getElementById('chat-messages');
             if (chatMessages) {
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }
-        }
+        });
+
+        // اسکرول خودکار به پایین هنگام ارسال پیام جدید
+        document.addEventListener('livewire:initialized', function () {
+            Livewire.on('message-sent', function () {
+                const chatMessages = document.getElementById('chat-messages');
+                if (chatMessages) {
+                    setTimeout(() => {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 100);
+                }
+            });
+        });
+
+        // اسکرول خودکار به پایین هنگام تغییر چت
+        document.addEventListener('livewire:initialized', function () {
+            Livewire.on('messages-loaded', function () {
+                const chatMessages = document.getElementById('chat-messages');
+                if (chatMessages) {
+                    setTimeout(() => {
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }, 100);
+                }
+            });
+        });
     </script>
 
     @script
@@ -615,3 +671,4 @@
         }
     </style>
 </div>
+
