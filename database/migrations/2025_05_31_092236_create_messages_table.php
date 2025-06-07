@@ -21,6 +21,17 @@ return new class extends Migration {
             $table->boolean('is_system')->default(false);
             $table->foreignId('reply_to_id')->nullable()->constrained('messages')->nullOnDelete();
             $table->timestamps();
+            $table->softDeletes();
+        });
+
+        // Create a table to track deleted messages per user
+        Schema::create('deleted_messages', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('message_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
+
+            $table->unique(['message_id', 'user_id']);
         });
     }
 
@@ -29,6 +40,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::dropIfExists('deleted_messages');
         Schema::dropIfExists('messages');
     }
 };

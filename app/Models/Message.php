@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Jalalian;
 
 class Message extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'chat_id',
@@ -23,6 +25,11 @@ class Message extends Model
         'original_message_id',
         'original_sender_id',
         'reply_to_id'
+    ];
+
+    protected $casts = [
+        'is_system' => 'boolean',
+        'read_at' => 'datetime',
     ];
 
     public function chat()
@@ -57,9 +64,25 @@ class Message extends Model
 
     public function readBy()
     {
-        return $this->belongsToMany(User::class)
+        return $this->belongsToMany(User::class, 'message_reads')
             ->withPivot('read_at')
             ->withTimestamps();
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsToMany(User::class, 'deleted_messages')
+            ->withTimestamps();
+    }
+
+    public function isDeletedForUser($userId)
+    {
+        return $this->deletedBy()->where('user_id', $userId)->exists();
+    }
+
+    public function markAsDeletedForUser($userId)
+    {
+        $this->deletedBy()->attach($userId);
     }
 
     public function markAsRead()
@@ -76,6 +99,6 @@ class Message extends Model
 
     public function getJalaliCreatedAtAttribute()
     {
-        return \Morilog\Jalali\Jalalian::fromDateTime($this->created_at)->format('H:i Y/m/d');
+        return \Morilog\Jalali\Jalalian::fromDateTime($this->created_at)->format('H:i');
     }
 }

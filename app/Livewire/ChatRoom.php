@@ -112,12 +112,17 @@ class ChatRoom extends Component
 
     public function loadMessages()
     {
-        if ($this->selectedChat) {
-            $this->messages = $this->selectedChat->messages()
-                ->with(['user', 'originalSender'])
-                ->orderBy('created_at', 'asc')
-                ->get();
+        if (!$this->selectedChat) {
+            return;
         }
+
+        $this->messages = $this->selectedChat->messages()
+            ->with(['user', 'replyTo.user', 'originalSender'])
+            ->whereDoesntHave('deletedBy', function ($query) {
+                $query->where('user_id', auth()->id());
+            })
+            ->orderBy('created_at', 'asc')
+            ->get();
     }
 
     public function loadDraft()
@@ -649,5 +654,10 @@ class ChatRoom extends Component
         } finally {
             $this->isToggleLoading = false;
         }
+    }
+
+    public function openDeleteModal($messageId)
+    {
+        $this->dispatch('openDeleteModal', messageId: $messageId)->to('delete-message-modal');
     }
 }
