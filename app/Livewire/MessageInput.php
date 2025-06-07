@@ -3,10 +3,12 @@
 namespace App\Livewire;
 
 use App\Models\Chat;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use App\Models\Message;
 use Illuminate\Support\Facades\Storage;
+use App\Events\MessageSent;
 
 class MessageInput extends Component
 {
@@ -115,6 +117,9 @@ class MessageInput extends Component
                 'file_name' => json_encode($fileNames),
             ]);
         }
+
+        // Broadcast the message
+        broadcast(new MessageSent($message->id, $this->chat->id))->toOthers();
 
         $this->message = '';
         $this->files = [];

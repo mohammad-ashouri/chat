@@ -635,6 +635,16 @@
     @push('scripts')
         <script>
             document.addEventListener('livewire:initialized', () => {
+                // Listen for real-time messages
+                if (typeof Echo !== 'undefined') {
+                    Echo.join(`chat.${@this.selectedChat?.id}`)
+                        .listen('.message.sent', (e) => {
+                            // Refresh messages when a new message is received
+                            @this.
+                            refreshMessages();
+                        });
+                }
+
                 Livewire.on('scroll-to-message', (data) => {
                     const messageElement = document.querySelector(`[data-message-id="${data.messageId}"]`);
                     if (messageElement) {
