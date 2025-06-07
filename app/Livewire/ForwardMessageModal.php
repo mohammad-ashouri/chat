@@ -38,27 +38,37 @@ class ForwardMessageModal extends Component
 
     public function loadChats()
     {
-        $this->chats = auth()->user()->chats()
-            ->with(['users', 'lastMessage'])
+        // Get all users except the current user
+        $users = \App\Models\User::where('id', '!=', auth()->id())
             ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhereHas('users', function ($q) {
-                            $q->where('name', 'like', '%' . $this->search . '%')
-                                ->where('users.id', '!=', auth()->id());
-                        });
-                });
+                $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($this->search) . '%']);
             })
             ->get()
-            ->map(function ($chat) {
-                if (!$chat->is_group) {
-                    $otherUser = $chat->users()
-                        ->where('users.id', '!=', auth()->id())
-                        ->first();
-                    $chat->other_user = $otherUser;
-                }
-                return $chat;
+            ->map(function ($user) {
+                return (object)[
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'is_group' => false,
+                    'other_user' => $user
+                ];
             });
+
+        // Get all groups
+        $groups = \App\Models\Chat::where('is_group', true)
+            ->when($this->search, function ($query) {
+                $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($this->search) . '%']);
+            })
+            ->get()
+            ->map(function ($group) {
+                return (object)[
+                    'id' => $group->id,
+                    'name' => $group->name,
+                    'is_group' => true
+                ];
+            });
+
+        // Combine users and groups
+        $this->chats = $users->concat($groups);
     }
 
     public function updatedSearch()
@@ -75,23 +85,47 @@ class ForwardMessageModal extends Component
             return;
         }
 
-        $chat = Chat::find($chatId);
-        if (!$chat) {
-            \Log::error('Chat not found', ['chatId' => $chatId]);
-            return;
+        // Check if the chatId is a user ID (direct message) or a group ID
+        $isDirectMessage = \App\Models\User::where('id', $chatId)->exists();
+
+        if ($isDirectMessage) {
+            // Find or create a direct chat with this user
+            $chat = \App\Models\Chat::whereHas('users', function ($query) use ($chatId) {
+                $query->where('users.id', auth()->id());
+            })
+                ->whereHas('users', function ($query) use ($chatId) {
+                    $query->where('users.id', $chatId);
+                })
+                ->where('is_group', false)
+                ->first();
+
+            if (!$chat) {
+                // Create a new direct chat
+                $chat = \App\Models\Chat::create([
+                    'is_group' => false
+                ]);
+                $chat->users()->attach([auth()->id(), $chatId]);
+            }
+        } else {
+            // Get the group chat
+            $chat = \App\Models\Chat::find($chatId);
+            if (!$chat) {
+                \Log::error('Chat not found', ['chatId' => $chatId]);
+                return;
+            }
         }
 
         $forwardedCount = 0;
         foreach ($this->messageIds as $messageId) {
-            $originalMessage = Message::find($messageId);
+            $originalMessage = \App\Models\Message::find($messageId);
             if (!$originalMessage) {
                 \Log::error('Original message not found', ['messageId' => $messageId]);
                 continue;
             }
 
             // Create the forwarded message
-            Message::create([
-                'chat_id' => $chatId,
+            \App\Models\Message::create([
+                'chat_id' => $chat->id,
                 'user_id' => auth()->id(),
                 'content' => $originalMessage->content,
                 'file_path' => $originalMessage->file_path,
@@ -113,11 +147,11 @@ class ForwardMessageModal extends Component
         $this->selectedChat = null;
 
         // Dispatch events for UI updates
-        $this->dispatch('message-forwarded', chatId: $chatId);
+        $this->dispatch('message-forwarded', chatId: $chat->id);
         $this->dispatch('refresh-messages')->to('chat-room');
         $this->dispatch('clear-selected-messages')->to('chat-room');
 
-        \Log::info('ForwardMessageModal::forwardMessage completed', ['chatId' => $chatId]);
+        \Log::info('ForwardMessageModal::forwardMessage completed', ['chatId' => $chat->id]);
     }
 
     public function render()
