@@ -442,19 +442,7 @@
             const selectedChatId = localStorage.getItem('selectedChatId');
             if (selectedChatId) {
                 $wire.handleChatSelected(selectedChatId);
-
-                // Start polling for messages
-                if (scrollInterval) {
-                    clearInterval(scrollInterval);
-                }
-
-                scrollInterval = setInterval(() => {
-                    const chatMessages = document.getElementById('chat-messages');
-                    if (chatMessages && chatMessages.children.length > 0) {
-                        scrollToBottom();
-                        clearInterval(scrollInterval);
-                    }
-                }, 100);
+                scrollToBottom();
             }
         });
 
@@ -468,19 +456,7 @@
             const selectedChatId = localStorage.getItem('selectedChatId');
             if (selectedChatId) {
                 $wire.handleChatSelected(selectedChatId);
-
-                // Start polling for messages
-                if (scrollInterval) {
-                    clearInterval(scrollInterval);
-                }
-
-                scrollInterval = setInterval(() => {
-                    const chatMessages = document.getElementById('chat-messages');
-                    if (chatMessages && chatMessages.children.length > 0) {
-                        scrollToBottom();
-                        clearInterval(scrollInterval);
-                    }
-                }, 100);
+                scrollToBottom();
             }
         });
 
@@ -494,12 +470,19 @@
         // Listen for message sent event
         document.addEventListener('livewire:initialized', () => {
             Livewire.on('message-sent', () => {
-                scrollToBottom();
+                setTimeout(scrollToBottom, 100); // Add a small delay to ensure DOM is updated
                 // Focus the input after sending message
                 const input = document.querySelector('input[type="text"]');
                 if (input) {
                     input.focus();
                 }
+            });
+        });
+
+        // Listen for new messages
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('messageReceived', () => {
+                setTimeout(scrollToBottom, 100); // Add a small delay to ensure DOM is updated
             });
         });
 
